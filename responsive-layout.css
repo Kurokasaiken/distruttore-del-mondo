@@ -1,0 +1,219 @@
+/* responsive-layout.css - Layout differenziato Desktop/Mobile */
+
+:root {
+    /* Forza uno spazio superiore consistente che puoi cambiare facilmente */
+    --top-space: 1cm;
+}
+
+/* Media Queries per Layout Desktop */
+@media (min-width: 1024px) {
+    /* Layout Desktop: 3 colonne */
+    body {
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    .main-container {
+        max-width: none;
+        display: grid;
+        grid-template-columns: 280px 1fr 280px;
+        grid-template-rows: 1fr;
+        grid-template-areas: 
+            "sidebar content right-sidebar";
+        gap: 0;
+        height: 100vh;
+        margin-top: 0; /* assicurati che non aggiunga spazio extra */
+        /* Applica lo spazio superiore proporzionale calcolato via JS */
+        padding-top: var(--top-space, 16px);
+    }
+    
+    .desktop-sidebar {
+        grid-area: sidebar;
+        background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1a24 100%);
+        padding: 0 20px 20px 20px; /* Solo padding laterale e inferiore */
+        overflow-y: auto;
+        border-right: 2px solid var(--accent-gold);
+    }
+    
+    .desktop-right-sidebar {
+        grid-area: right-sidebar;
+        background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1a24 100%);
+        padding: 0 20px 20px 20px; /* Solo padding laterale e inferiore */
+        overflow-y: auto;
+        border-left: 2px solid var(--accent-gold);
+    }
+    
+    .desktop-content {
+        grid-area: content;
+        overflow-y: auto;
+        padding: 0 30px 20px 30px; /* Solo padding laterale e inferiore */
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        height: 100vh;
+    }
+    
+    /* Nascondi controlli mobile su desktop */
+    .mobile-controls, .mobile-header {
+        display: none !important;
+    }
+    
+    /* Sidebar Navigation (per entrambe le sidebar) */
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 0; /* Nessun margine superiore */
+        padding-top: 10px; /* Minimo padding per non attaccare al bordo */
+    }
+    
+    .sidebar-section {
+        background: rgba(200, 176, 144, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        border: 1px solid var(--accent-gold);
+        margin-top: 0; /* Nessun margine superiore */
+    }
+    
+    .sidebar-section:first-child {
+        margin-top: 0; /* Prima sezione senza margine superiore */
+    }
+    
+    .sidebar-section h3 {
+        color: var(--text-gold);
+        font-family: 'Cinzel', serif;
+        font-size: 1.1rem;
+        margin: 0 0 10px 0; /* Solo margine inferiore */
+        text-align: center;
+    }
+    
+    .sidebar-btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--color-light) 0%, var(--color-dark) 100%);
+        color: var(--text-primary);
+        border: none;
+        border-radius: 6px;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        text-align: left;
+    }
+    
+    .sidebar-btn:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(200, 176, 144, 0.3);
+    }
+    
+    .sidebar-btn i {
+        margin-right: 8px;
+        width: 20px;
+    }
+    
+    /* Content area adjustments - ottimizzato per 3 colonne */
+    .image-section {
+        flex: 0 0 auto;
+        height: 45vh; /* Metà altezza viewport */
+        min-height: 300px;
+    }
+    
+    .text-section {
+        flex: 1; /* Occupa tutto lo spazio rimanente */
+        min-height: 40vh;
+    }
+    
+    .decorative-divider {
+        display: none; /* Rimuovi divider su desktop per risparmiare spazio */
+    }
+}
+
+/* Header Mobile */
+.mobile-header {
+    text-align: center;
+    padding: 5px 0; /* Padding minimo */
+    background: linear-gradient(135deg, var(--color-light) 0%, var(--color-dark) 100%);
+    margin: 0 0 5px 0; /* Margine minimo solo sotto */
+    border-radius: 8px;
+}
+
+.mobile-header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem; /* Ridotto leggermente */
+    color: var(--text-gold);
+    text-shadow: 0 0 12px rgba(214, 198, 178, 0.5);
+    letter-spacing: 2px;
+    margin: 0; /* Nessun margine */
+}
+
+/* Layout Mobile (fino a 1023px) */
+@media (max-width: 1023px) {
+    /* Nascondi sidebar desktop su mobile */
+    .desktop-sidebar, .desktop-right-sidebar {
+        display: none !important;
+    }
+    
+    /* Mantieni layout mobile esistente */
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        padding: 0; /* Nessun padding */
+        margin: 0; /* Nessun margine */
+    }
+    
+    .desktop-content {
+        display: contents;
+        padding: 0 5px 5px 5px; /* Solo padding laterale e inferiore */
+    }
+
+    /* Header mobile */
+    .mobile-header {
+        display: block;
+        margin: 0 5px 5px 5px; /* Solo margini laterali e inferiore minimi */
+    }
+}
+
+/* Utility classes */
+.desktop-only {
+    display: none !important;
+}
+
+.mobile-only {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .desktop-only {
+        display: block !important;
+    }
+    
+    .mobile-only {
+        display: none !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .desktop-only {
+        display: block !important;
+    }
+    
+    .mobile-only {
+        display: none !important;
+    }
+    
+    /* Ottimizzazione per le sezioni contenuto */
+    .image-inner {
+        height: 100% !important;
+    }
+    
+    .text-section .text-content {
+        max-height: none;
+        height: calc(100% - 60px); /* Sottrai l'altezza del titolo */
+    }
+}
+
+.mobile-only {
+    display: block;
+}

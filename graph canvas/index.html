@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Graph Canvas — Generatore & Simulatore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="panel">
+    <div class="card header">
+      <div>
+        <div class="title">Graph Builder</div>
+        <div class="muted">150 nodi • 3×3 quartieri • Start B1 • Tower B3</div>
+      </div>
+    </div>
+
+    <div class="card controls">
+      <label>Backdoor % <input id="backdoorPct" type="number" min="0" max="30" value="8"></label>
+      <label>Min backdoor hops <input id="backdoorMin" type="number" min="2" max="20" value="3"></label>
+      <label>Max backdoor hops <input id="backdoorMax" type="number" min="3" max="20" value="6"></label>
+      <label>Attempts max <input id="attemptsMax" type="number" min="1" max="200" value="30"></label>
+      <label>Playback speed (ms) <input id="playSpeed" type="number" min="50" max="2000" value="600"></label>
+
+      <div class="btnrow">
+        <button id="genBtn" class="btn primary">Genera & Valida</button>
+        <button id="simBtn" class="btn">Gioca Run</button>
+        <button id="batchBtn" class="btn">Batch 100 sim</button>
+      </div>
+
+      <div class="btnrow">
+        <button id="downloadBtn" class="btn secondary">Scarica JSON</button>
+        <button id="copyBtn" class="btn secondary">Copia JSON</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="small-muted">Log</div>
+      <pre id="log" class="log">Pronto. Premi "Genera & Valida".</pre>
+    </div>
+
+    <div class="card">
+      <div class="small-muted">Report</div>
+      <pre id="report" class="log">—</pre>
+    </div>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="graphCanvas"></canvas>
+    <div id="stats" class="card statbox">Stato: nessuna simulazione</div>
+  </div>
+
+  <script src="graph.js"></script>
+  <script src="backdoor.js"></script>
+  <script src="patrol.js"></script>
+  <script src="simulation.js"></script>
+  <script src="ui.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

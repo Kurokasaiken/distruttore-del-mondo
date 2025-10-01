@@ -1,0 +1,21 @@
+:root{
+  --bg-1:#071226; --bg-2:#071b2b;
+  --muted:#94a3b8; --accent-a:#06b6d4; --accent-b:#8b5cf6; --accent-c:#fb923c;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;color:#e6eef8;background:linear-gradient(180deg,var(--bg-1),var(--bg-2))}
+#panel{width:340px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card{border-radius:12px;padding:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
+.header{display:flex;justify-content:space-between;align-items:center}
+.title{font-size:18px;background:linear-gradient(135deg,var(--accent-a),var(--accent-b));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.small-muted{font-size:12px;color:var(--muted)}
+.controls label{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:14px}
+.controls input[type=number]{width:90px;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted)}
+.btn{padding:8px 12px;border-radius:10px;border:0;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--accent-a),var(--accent-b));color:#04202a}
+.btn.secondary{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04)}
+.btnrow{display:flex;gap:8px;margin-top:8px}
+.log{height:160px;overflow:auto;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.4));padding:8px;border-radius:8px;font-family:monospace;font-size:12px;color:#9fd3df}
+#canvasWrap{position:fixed;left:380px;right:16px;top:16px;bottom:16px;display:flex;flex-direction:column;gap:8px}
+#graphCanvas{flex:1;border-radius:12px;box-shadow:0 10px 40px rgba(2,6,23,0.6);background:linear-gradient(180deg, rgba(3,7,16,0.9), rgba(6,11,20,0.5));display:block}
+.statbox{padding:8px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-family:monospace}
+@media (max-width:1100px){ #panel{position:relative;width:100%;} #canvasWrap{position:relative;left:0;right:0;top:0;bottom:0} }

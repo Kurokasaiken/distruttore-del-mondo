@@ -1,0 +1,647 @@
+/* style.css - tutti gli stili dal file HTML */
+:root {
+    --bg-darker: #2D3038;
+    --color-light: #D7C19D;
+    --color-dark: #7A6053;
+    --text-primary: #160704;
+    --text-gold: #C8B090; /* Ho leggermente modificato per coerenza con le nuove immagini */
+    --text-dim: #B8A99A;
+    --bg-dark: #272A33;
+    --accent-gold: #C8B090;
+    --accent-bright: #6F9593; /* Colore luminoso delle rune */
+    --accent-bho: #5E888A;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Cormorant Garamond', serif;
+    background: linear-gradient(135deg, var(--bg-dark) 0%, #2A1E2A 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    /* Lo spazio superiore viene applicato al contenitore principale; body non deve aggiungere padding */
+    padding-top: 0;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ... (Il resto del tuo CSS per .starry-sky, .star, @keyframes, ecc. rimane invariato) ... */
+
+/* Starry sky background: assicurati che inizi al top dello schermo */
+.starry-sky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.main-container {
+    margin: 0; /* Nessun margine */
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header Stilizzato con effetto speciale (rimane invariato) */
+.header {
+    text-align: center;
+    padding: 12px 10px;
+    position: relative;
+    background: linear-gradient(135deg, var(--color-light) 0%, var(--color-dark) 100%);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    color: var(--text-gold);
+    text-shadow: 0 0 12px rgba(214, 198, 178, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    font-weight: 700;
+    position: relative;
+    animation: titleGlow 4s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%, 100% { text-shadow: 0 0 32px #ffe7b0, 0 0 8px #c8b090, 2px 2px 4px rgba(0,0,0,0.5); }
+    50% { text-shadow: 0 0 48px #ffe7b0, 0 0 24px #c8b090, 2px 2px 4px rgba(0,0,0,0.5); }
+}
+
+.header p {
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--text-dim);
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* NUOVA IMPLEMENTAZIONE DELLA CORNICE COMPLESSA per .image-section e .text-section */
+
+/* Stile base per tutti i pannelli con cornice complessa */
+.fantasy-panel-frame {
+    position: relative;
+    border-radius: 12px; /* Il bordo del pannello stesso */
+    overflow: visible; /* IMPORTANTE: permette agli angoli e all'ornamento di sporgere */
+    padding: 30px; /* Spazio interno affinché la cornice non copra il contenuto */
+    background: linear-gradient(to bottom, rgba(42, 42, 48, 0.9), rgba(30, 30, 40, 0.95)); /* Sfondo interno del pannello */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); /* Ombreggiatura del pannello */
+}
+
+/* Container per la cornice overlay */
+.fantasy-panel-frame .frame-elements {
+    position: absolute;
+    inset: 0; /* Copre l'intera area del .fantasy-panel-frame */
+    pointer-events: none; /* Non blocca gli eventi del mouse */
+    z-index: 2; /* Posiziona sopra il background ma sotto il contenuto testuale/immagine */
+}
+
+/* Stili per gli angoli */
+.fantasy-panel-frame .frame-elements .corner {
+    position: absolute;
+    width: 80px; /* Larghezza degli angoli, regola in base alle dimensioni dell'immagine */
+    height: 80px; /* Altezza degli angoli */
+    background-repeat: no-repeat;
+    background-size: contain;
+    will-change: transform, opacity; /* Ottimizzazione per animazioni future */
+}
+.fantasy-panel-frame .frame-elements .corner.tl { left: -15px; top: -15px; background-image: url('UI_Assets/corner_tl.png'); }
+.fantasy-panel-frame .frame-elements .corner.tr { right: -15px; top: -15px; background-image: url('UI_Assets/corner_tr.png'); }
+.fantasy-panel-frame .frame-elements .corner.bl { left: -15px; bottom: -15px; background-image: url('UI_Assets/corner_bl.png'); }
+.fantasy-panel-frame .frame-elements .corner.br { right: -15px; bottom: -15px; background-image: url('UI_Assets/corner_br.png'); }
+
+/* Stili per i bordi laterali (ripetuti) */
+.fantasy-panel-frame .frame-elements .side {
+    position: absolute;
+    /* Adatta questi valori in base alla dimensione degli angoli per allinearli */
+    top: 60px; /* Inizia dopo l'angolo superiore */
+    bottom: 60px; /* Finisce prima dell'angolo inferiore */
+    width: 25px; /* Larghezza del pezzo laterale */
+    background-repeat: repeat-y; /* Ripete il pezzo verticalmente */
+    background-size: contain; /* Adatta il pezzo senza deformarlo */
+}
+.fantasy-panel-frame .frame-elements .side.left { left: -8px; background-image: url('UI_Assets/side_vertical.png'); }
+.fantasy-panel-frame .frame-elements .side.right { right: -8px; background-image: url('UI_Assets/side_vertical.png'); transform: scaleX(-1); /* Specchia l'immagine per il lato destro */ }
+
+/* Stili per i bordi superiori/inferiori (ripetuti) */
+.fantasy-panel-frame .frame-elements .top-bottom-border {
+    position: absolute;
+    left: 60px; /* Inizia dopo l'angolo sinistro */
+    right: 60px; /* Finisce prima dell'angolo destro */
+    height: 25px; /* Altezza del pezzo orizzontale */
+    background-repeat: repeat-x; /* Ripete il pezzo orizzontalmente */
+    background-size: contain;
+}
+.fantasy-panel-frame .frame-elements .top-bottom-border.top { top: -8px; background-image: url('UI_Assets/side_horizontal.png'); }
+.fantasy-panel-frame .frame-elements .top-bottom-border.bottom { bottom: -8px; background-image: url('UI_Assets/side_horizontal.png'); transform: scaleY(-1); /* Specchia l'immagine per il bordo inferiore */ }
+
+/* Ornamento centrale superiore (opzionale) */
+.fantasy-panel-frame .frame-elements .top-ornament {
+    position: absolute;
+    top: -45px; /* Spostato più in alto per sporgere */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px; /* Larghezza dell'ornamento */
+    height: 120px; /* Altezza dell'ornamento */
+    background-image: url('UI_Assets/ornament_top.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 3; /* Per essere sopra agli angoli e bordi se si sovrappone */
+}
+
+
+/* Riquadro Immagine con Titolo - Applichiamo la nuova cornice */
+.image-section {
+    position: relative;
+    /* Rimuoviamo il padding e background qui, gestiti da .fantasy-panel-frame */
+    /* min-height e box-shadow gestiti dal container */
+    overflow: visible; /* Essenziale per la cornice custom */
+}
+/* Applichiamo il set di stili base della cornice */
+.image-section.fantasy-panel-frame {
+    /* Puoi personalizzare qui eventuali sfumature o ombre specifiche per la image-section */
+    background: linear-gradient(to bottom, rgba(42, 42, 48, 0.9), rgba(30, 30, 40, 0.95));
+}
+
+.image-inner {
+    background: transparent; /* Il background è sul .fantasy-panel-frame */
+    border-radius: 10px;
+    padding: 0; /* Il padding è sul .fantasy-panel-frame */
+    position: relative;
+    height: 300px; /* Altezza maggiore per l'immagine */
+    display: flex; /* Flexbox per centrare il contenuto */
+    flex-direction: column;
+}
+.image-title {
+    background: linear-gradient(to right, transparent, rgba(200, 176, 144, 0.1), transparent); /* Sfumatura più leggera */
+    padding: 15px; /* Padding ridotto */
+    text-align: center;
+    border-bottom: 1px solid var(--accent-gold);
+    position: relative;
+}
+.image-title h2 {
+    font-family: 'Cinzel', serif;
+    color: var(--text-gold);
+    font-size: 1.2rem; /* Dimensione leggermente maggiore */
+    line-height: 1.2;
+    text-shadow: 0 0 10px rgba(214, 198, 178, 0.5);
+    letter-spacing: 1.5px;
+    position: relative;
+    display: inline-block;
+}
+.image-title h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; /* Spostato leggermente più in alto */
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--accent-gold), transparent);
+    animation: linePulse 3s ease-in-out infinite;
+}
+.image-content {
+    flex-grow: 1; /* Permette all'immagine di occupare lo spazio rimanente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Nasconde l'overflow dell'immagine */
+    position: relative;
+}
+.image-content img { /* Stile per le immagini all'interno */
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Riempie l'area, tagliando se necessario */
+    object-position: center; /* Centra l'immagine */
+    display: block;
+    border-radius: 5px; /* Bordi leggermente arrotondati per l'immagine */
+}
+.image-placeholder { /* Rimuovi display: none; se vuoi usarlo come fallback */
+    width: 100%;
+    height: 100%;
+    background: var(--bg-dark); /* Sfondo scuro per il placeholder */
+    display: flex; /* Assicurati che sia flexbox per centrare il contenuto */
+    justify-content: center;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 1.5rem;
+    font-style: italic;
+}
+
+
+/* Riquadro Testo con Slider Interno - Applichiamo la nuova cornice */
+.text-section {
+    position: relative;
+    /* Rimuoviamo il padding e background qui, gestiti da .fantasy-panel-frame */
+    /* box-shadow gestito dal container */
+    overflow: visible; /* Essenziale per la cornice custom */
+}
+/* Applichiamo il set di stili base della cornice */
+.text-section.fantasy-panel-frame {
+     /* Sfondo più chiaro per la pergamena del testo */
+    background: #E9D0A7;
+    color: var(--text-primary);
+}
+
+/* Modifiche per il .text-inner per accomodare la cornice */
+.text-section .text-inner {
+    background: transparent; /* Il background è sul .fantasy-panel-frame */
+    border-radius: 10px;
+    padding: 0; /* Il padding è sul .fantasy-panel-frame */
+    position: relative;
+    height: 100%;
+}
+/* Rimuoviamo il::before duplicato e l'url del DALL-E */
+.text-section::before {
+    content: none; /* Disabilita il ::before vecchio */
+}
+
+/* Stili per il testo all'interno della cornice (rimangono simili) */
+.text-title {
+    background: linear-gradient(to right, transparent, rgba(200, 176, 144, 0.3), transparent);
+    padding: 15px; /* Padding ridotto */
+    text-align: center;
+    border-bottom: 1px solid var(--accent-gold);
+}
+.text-title h2 {
+    font-family: 'Cinzel', serif;
+    color: var(--text-gold);
+    font-size: 1.1rem;
+    text-shadow: 0 0 10px rgba(214, 198, 178, 0.5);
+    letter-spacing: 1.5px;
+    position: relative;
+    display: inline-block;
+}
+.text-title h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--accent-gold), transparent);
+    animation: linePulse 3s ease-in-out infinite;
+}
+.text-content {
+    padding: 18px 15px;
+    max-height: 400px;
+    font-size: 0.95rem;
+    overflow-y: auto;
+    background: radial-gradient(circle at center, rgba(200, 176, 144, 0.08) 0%, transparent 70%);
+    width: 100%;
+    color: var(--text-primary); /* Assicurati che il colore sia leggibile */
+}
+.text-slider {
+    margin-bottom: 20px; /* Ridotto il margine */
+    min-height: 100px; /* Altezza ridotta */
+    width: 100%;
+        background: transparent; /* Il background è sul fantasy-panel-frame */
+        color: var(--text-primary);
+        border-radius: 0;
+        padding: 0;
+}
+.text-slider h3, .text-slider p {
+    color: var(--text-primary);
+}
+.text-slider h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--accent-bright);
+    margin-bottom: 15px; /* Ridotto il margine */
+    font-size: 1.6rem; /* Dimensione ridotta */
+    padding-bottom: 8px; /* Padding ridotto */
+    text-shadow: 0 0 8px rgba(224, 208, 176, 0.5);
+    position: relative;
+    display: inline-block;
+}
+.text-slider h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent-gold), transparent);
+}
+.text-slider p {
+    line-height: 1.6; /* Line-height ridotto per maggiore leggibilità */
+    margin-bottom: 15px; /* Margine ridotto */
+    font-size: 1rem; /* Dimensione standard per il testo */
+    text-align: justify;
+    color: var(--text-primary);
+}
+.text-slider .graphic-placeholder {
+    display: block; /* Ora vogliamo vederlo, non nasconderlo */
+    height: 200px; /* Altezza appropriata */
+    margin: 15px 0;
+}
+.text-slider .choice-btn {
+    display: block;
+    width: 100%;
+    margin: 8px 0; /* Margine ridotto */
+    padding: 10px 15px;
+    background: var(--bg-dark); /* Sfondo più scuro per i bottoni delle scelte */
+    color: var(--text-gold); /* Testo oro */
+    border: 1px solid var(--accent-gold); /* Bordo sottile */
+    border-radius: 6px; /* Bordi più smussati */
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem; /* Dimensione leggermente ridotta */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.text-slider .choice-btn:hover {
+    background: var(--color-dark); /* Sfondo più scuro all'hover */
+    color: white; /* Testo bianco all'hover */
+    box-shadow: 0 0 10px var(--accent-gold);
+}
+
+
+/* Pannello dei Pulsanti - Implementiamo la cornice border-image sui titoli */
+.controls-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+.control-group {
+    background: linear-gradient(to bottom, var(--color-light), var(--color-dark));
+    border-radius: 12px;
+    padding: 4px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.control-inner {
+    background: linear-gradient(to bottom, rgba(42, 42, 48, 0.9), rgba(30, 30, 40, 0.95));
+    border-radius: 10px;
+    padding: 25px;
+    height: 100%;
+}
+.control-group h3 {
+    /* *** QUI USIAMO LA NUOVA border-image con l'immagine 9-slice *** */
+    border: 20px solid transparent; /* Crea lo spazio per la cornice (metà dell'immagine slice) */
+    border-image: url('UI_Assets/border_image_frame.png') 40 stretch; /* 40px è il taglio */
+    padding: 10px 0; /* Padding interno per il testo */
+    
+    font-family: 'Cinzel', serif;
+    color: var(--text-gold);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.6rem;
+    text-shadow: 0 0 10px rgba(214, 198, 178, 0.5);
+    position: relative;
+    background-color: var(--bg-dark); /* Sfondo per il testo dell'h3 */
+    border-radius: 8px; /* Smussa gli angoli dell'h3 */
+}
+/* Rimuoviamo il ::after per l'h3, dato che la cornice è ora un bordo immagine */
+.control-group h3::after {
+    content: none;
+}
+.btn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+.control-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, rgba(115, 87, 76, 0.3), rgba(67, 48, 43, 0.6));
+    border: 1px solid var(--accent-gold);
+    color: var(--text-gold);
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: 0.5s;
+}
+.control-btn:hover::before {
+    left: 100%;
+}
+.control-btn:hover {
+    background: linear-gradient(to bottom, var(--color-dark), var(--color-light));
+    box-shadow: 0 0 15px var(--accent-gold);
+    transform: translateY(-3px);
+}
+.control-btn:active {
+    transform: translateY(1px);
+}
+.control-btn i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: var(--accent-bright);
+    text-shadow: 0 0 8px rgba(224, 208, 176, 0.5);
+    transition: all 0.3s ease;
+}
+.control-btn:hover i {
+    transform: scale(1.2);
+    color: var(--text-gold);
+}
+
+/* Placeholder per elementi grafici avanzati (rimane invariato) */
+.graphic-placeholder {
+    height: 320px;
+    background: linear-gradient(45deg, rgba(200, 176, 144, 0.1) 25%, transparent 25%, transparent 50%, rgba(200, 176, 144, 0.1) 50%, rgba(200, 176, 144, 0.1) 75%, transparent 75%, transparent);
+    background-size: 20px 20px;
+    border: 6px double var(--accent-gold);
+    border-radius: 16px;
+    box-shadow: 0 0 24px var(--accent-gold);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--accent-gold);
+    font-style: italic;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+}
+.graphic-placeholder::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    animation: placeholderShine 3s infinite;
+}
+@keyframes placeholderShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Barra di scorrimento personalizzata (rimane invariata) */
+.text-content::-webkit-scrollbar {
+    width: 10px;
+}
+.text-content::-webkit-scrollbar-track {
+    background: rgba(67, 48, 43, 0.3);
+    border-radius: 5px;
+}
+.text-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, var(--color-light), var(--color-dark));
+    border-radius: 5px;
+    box-shadow: 0 0 10px var(--accent-gold);
+}
+.text-content::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, var(--accent-bright), var(--accent-gold));
+}
+
+/* Particelle luminose animate (rimane invariato) */
+.particles-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+}
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffe7b0 60%, transparent 100%);
+    opacity: 0.7;
+    animation: particleMove 12s linear infinite;
+}
+@keyframes particleMove {
+    0% { transform: translateY(0) scale(1); opacity: 0.7; }
+    50% { transform: translateY(40vh) scale(1.2); opacity: 0.4; }
+    100% { transform: translateY(80vh) scale(0.8); opacity: 0.1; }
+}
+
+/* Fade tra sezioni (rimane invariato) */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.main-container > * {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+}
+.header { animation-delay: 0.1s; }
+.image-section { animation-delay: 0.3s; }
+.text-section { animation-delay: 0.5s; }
+.controls-panel { animation-delay: 0.7s; }
+
+/* Transizione su immagini (rimane invariato) */
+.image-content img, .image-placeholder {
+    transition: box-shadow 0.5s, filter 0.5s, transform 0.5s;
+}
+.image-content img:hover, .image-placeholder:hover {
+    box-shadow: 0 0 48px #ffe7b0, 0 0 24px #c8b090;
+    filter: brightness(1.1) saturate(1.2);
+    transform: scale(1.04) rotate(-2deg);
+}
+
+/* Responsive Design Migliorato (modificato per i nuovi valori) */
+@media (max-width: 992px) {
+    .header h1 {
+        font-size: 2.5rem; /* Adattato */
+    }
+    .header p {
+        font-size: 1.2rem; /* Adattato */
+    }
+    .controls-panel {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    /* Responsive per la cornice complessa */
+    .fantasy-panel-frame { padding: 20px; }
+    .fantasy-panel-frame .frame-elements .corner { width: 60px; height: 60px; left: -10px; top: -10px; right: -10px; bottom: -10px; }
+    .fantasy-panel-frame .frame-elements .side { width: 20px; top: 40px; bottom: 40px; left: -6px; right: -6px; }
+    .fantasy-panel-frame .frame-elements .top-bottom-border { height: 20px; left: 40px; right: 40px; top: -6px; bottom: -6px; }
+    .fantasy-panel-frame .frame-elements .top-ornament { width: 100px; height: 100px; top: -35px; }
+}
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2rem; /* Adattato */
+    }
+    .image-inner {
+        height: 250px; /* Altezza ridotta per mobile */
+    }
+    .text-content {
+        padding: 15px; /* Padding ridotto */
+    }
+    .btn-grid {
+        grid-template-columns: 1fr;
+    }
+    .image-placeholder {
+        font-size: 1.5rem;
+        padding: 20px;
+    }
+    .text-slider h3 {
+        font-size: 1.3rem;
+    }
+    .text-slider p {
+        font-size: 0.9rem;
+    }
+    .text-slider .choice-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    .control-group h3 {
+        font-size: 1.2rem;
+        border: 15px solid transparent; /* Ridotto per mobile */
+    }
+    .control-btn {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    .control-btn i {
+        font-size: 1.5rem;
+    }
+    /* Responsive per la cornice complessa */
+    .fantasy-panel-frame { padding: 15px; }
+    .fantasy-panel-frame .frame-elements .corner { width: 50px; height: 50px; left: -8px; top: -8px; right: -8px; bottom: -8px; }
+    .fantasy-panel-frame .frame-elements .side { width: 15px; top: 35px; bottom: 35px; left: -5px; right: -5px; }
+    .fantasy-panel-frame .frame-elements .top-bottom-border { height: 15px; left: 35px; right: 35px; top: -5px; bottom: -5px; }
+    .fantasy-panel-frame .frame-elements .top-ornament { width: 80px; height: 80px; top: -25px; }
+}
+@media (max-width: 480px) {
+    .main-container { padding: 10px; }
+    .header { padding: 20px 10px; }
+    .header h1 { font-size: 1.8rem; }
+    .header p { font-size: 1rem; }
+    .image-title h2, .text-title h2 { font-size: 1.5rem; }
+    .image-inner { height: 200px; }
+    .graphic-placeholder { font-size: 1.2rem; padding: 15px; }
+    .text-slider h3 { font-size: 1.1rem; }
+    .text-slider p { font-size: 0.85rem; }
+    /* Responsive per la cornice complessa */
+    .fantasy-panel-frame { padding: 10px; }
+    .fantasy-panel-frame .frame-elements .corner { width: 40px; height: 40px; left: -6px; top: -6px; right: -6px; bottom: -6px; }
+    .fantasy-panel-frame .frame-elements .side { width: 12px; top: 28px; bottom: 28px; left: -4px; right: -4px; }
+    .fantasy-panel-frame .frame-elements .top-bottom-border { height: 12px; left: 28px; right: 28px; top: -4px; bottom: -4px; }
+    .fantasy-panel-frame .frame-elements .top-ornament { width: 60px; height: 60px; top: -20px; }
+}

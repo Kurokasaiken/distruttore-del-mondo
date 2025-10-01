@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Slayer - Interactive Fiction</title>
+    <link rel="preload" href="style.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="style.css"></noscript>
+    <link rel="stylesheet" href="responsive-layout.css">
+    <link rel="stylesheet" href="interactive-fiction-ui.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=MedievalSharp&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="starry-sky">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Desktop Sidebar (nascosta su mobile) -->
+        <div class="desktop-sidebar desktop-only">
+            <div class="sidebar-nav">
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-gamepad"></i> Gioco</h3>
+                    <button class="sidebar-btn" onclick="showSaveLoad()">
+                        <i class="fas fa-save"></i> Salva/Carica
+                    </button>
+                    <button class="sidebar-btn" onclick="toggleStats()">
+                        <i class="fas fa-chart-bar"></i> Statistiche
+                    </button>
+                    <button class="sidebar-btn" onclick="toggleInventory()">
+                        <i class="fas fa-archive"></i> Inventario
+                    </button>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-compass"></i> Navigazione</h3>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-map"></i> Mappa del Mondo
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-book"></i> Libro delle Leggende
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-scroll"></i> Diario delle Missioni
+                    </button>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-cogs"></i> Opzioni</h3>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-volume-up"></i> Audio
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-palette"></i> Tema
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-question-circle"></i> Aiuto
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Right Sidebar (speculare alla sinistra) -->
+        <div class="desktop-right-sidebar desktop-only">
+            <div class="sidebar-nav">
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-scroll"></i> Cronache</h3>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-history"></i> Storia Recente
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-bookmark"></i> Segnalibri
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-star"></i> Momenti Epici
+                    </button>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-users"></i> Social</h3>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-share-alt"></i> Condividi
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-trophy"></i> Achievements
+                    </button>
+                    <button class="sidebar-btn">
+                        <i class="fas fa-comments"></i> Community
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="desktop-content">
+        <!-- Titolo mobile only -->
+        <div class="mobile-header mobile-only">
+            <h1>World Slayer</h1>
+        </div>
+
+        <div class="image-section fantasy-panel-frame"> <div class="frame-elements" aria-hidden="true">
+                <div class="corner tl" role="presentation"></div>
+                <div class="corner tr" role="presentation"></div>
+                <div class="corner bl" role="presentation"></div>
+                <div class="corner br" role="presentation"></div>
+
+                <div class="side left" role="presentation"></div>
+                <div class="side right" role="presentation"></div>
+                <div class="top-bottom-border top" role="presentation"></div>
+                <div class="top-bottom-border bottom" role="presentation"></div>
+
+                <div class="top-ornament" role="presentation"></div>
+            </div>
+            
+            <div class="image-inner">
+                <div class="image-title"><h2>Il Santuario Antico</h2></div>
+                <div class="image-content">
+                    <img src="example-panorama.jpg" alt="Antico santuario in rovina" style="width:100%; height:100%; object-fit: cover; object-position: center;">
+                </div>
+            </div>
+        </div>
+        <div class="decorative-divider"></div>
+
+        <div class="text-section fantasy-panel-frame"> <div class="frame-elements" aria-hidden="true">
+                <div class="corner tl" role="presentation"></div>
+                <div class="corner tr" role="presentation"></div>
+                <div class="corner bl" role="presentation"></div>
+                <div class="corner br" role="presentation"></div>
+
+                <div class="side left" role="presentation"></div>
+                <div class="side right" role="presentation"></div>
+                <div class="top-bottom-border top" role="presentation"></div>
+                <div class="top-bottom-border bottom" role="presentation"></div>
+
+                <div class="top-ornament" role="presentation"></div>
+            </div>
+
+            <div class="text-inner">
+                <div class="text-title"><h2>Cronache dell'Ombra</h2></div>
+                <div class="text-content">
+                    <div class="text-slider">
+                        <h3>La Profezia dei Cinque Regni</h3>
+                        <p>Nei tempi antichi, quando i cinque regni erano uniti sotto il grande albero di Yggdrasil, gli dei predissero un'era di oscurità. Solo l'Unico, portatore del Cristallo di Luna, avrebbe potuto riportare l'equilibrio nel mondo.</p>
+                        <p>Ora, con l'avvicinarsi dell'eclissi millenaria, i segni si manifestano nuovamente. Le stelle si allineano e il destino chiama coloro che sono pronti ad ascoltare.</p>
+                        <div class="graphic-placeholder">
+                            <img src="UI_Assets/placeholder-profezia-cinque-regni.png" alt="Illustrazione raffigurante la Profezia dei Cinque Regni, utile per la comprensione visiva della storia." style="width:100%;height:auto; display: block;">
+                        </div>
+                    </div>
+                    <div class="slider-controls">
+                        <button class="slider-btn"><i class="fas fa-chevron-left"></i> Precedente</button>
+                        <button class="slider-btn">Prossima <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="decorative-divider"></div>
+
+        <div class="controls-panel mobile-only">
+            <div class="control-group">
+                <div class="control-inner">
+                    <h3>Navigazione</h3> <div class="btn-grid">
+                        <div class="control-btn">
+                            <i class="fas fa-map"></i>
+                            <span>Mappa</span>
+                        </div>
+                        <div class="control-btn">
+                            <i class="fas fa-book"></i>
+                            <span>Leggende</span>
+                        </div>
+                        <div class="control-btn">
+                            <i class="fas fa-scroll"></i>
+                            <span>Missioni</span>
+                        </div>
+                        <div class="control-btn">
+                            <i class="fas fa-compass"></i>
+                            <span>Esplora</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-inner">
+                    <h3>Personaggio</h3> <div class="btn-grid">
+                        <div class="control-btn" onclick="toggleStats()">
+                            <i class="fas fa-user"></i>
+                            <span>Stats</span>
+                        </div>
+                        <div class="control-btn">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Abilità</span>
+                        </div>
+                        <div class="control-btn" onclick="toggleInventory()">
+                            <i class="fas fa-archive"></i>
+                            <span>Inventario</span>
+                        </div>
+                        <div class="control-btn" onclick="showSaveLoad()">
+                            <i class="fas fa-save"></i>
+                            <span>Salva</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game UI Elements -->
+        <div class="stats-panel" id="statsPanel">
+            <h4>Statistiche</h4>
+            <div class="stat-item">
+                <span>Salute:</span>
+                <span class="stat-value" id="healthValue">100</span>
+            </div>
+            <div class="stat-bar">
+                <div class="stat-bar-fill" id="healthBar" style="width: 100%"></div>
+            </div>
+            
+            <div class="stat-item">
+                <span>Mana:</span>
+                <span class="stat-value" id="manaValue">50</span>
+            </div>
+            <div class="stat-bar">
+                <div class="stat-bar-fill" id="manaBar" style="width: 50%"></div>
+            </div>
+            
+            <div class="stat-item">
+                <span>Esperienza:</span>
+                <span class="stat-value" id="expValue">0</span>
+            </div>
+        </div>
+        
+        <div class="inventory-panel" id="inventoryPanel">
+            <h4>Inventario</h4>
+            <div class="inventory-grid" id="inventoryGrid">
+                <!-- Inventory slots will be generated by JavaScript -->
+            </div>
+        </div>
+        
+        </div> <!-- Close desktop-content -->
+    </div> <!-- Close main-container -->
+
+    <script src="main.js"></script>
+    <script src="interactive-fiction-engine.js"></script>
+    <script>
+        // UI Helper Functions
+        function toggleStats() {
+            const panel = document.getElementById('statsPanel');
+            panel.classList.toggle('active');
+        }
+        
+        function toggleInventory() {
+            const panel = document.getElementById('inventoryPanel');
+            panel.classList.toggle('active');
+            
+            // Generate inventory slots if not already done
+            const grid = document.getElementById('inventoryGrid');
+            if (grid.children.length === 0) {
+                for (let i = 0; i < 20; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'inventory-slot';
+                    slot.setAttribute('data-slot', i);
+                    grid.appendChild(slot);
+                }
+            }
+        }
+        
+        function showSaveLoad() {
+            // Implementation for save/load modal
+            console.log('Save/Load modal would open here');
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    </script>
