@@ -1,8 +1,55 @@
-// backdoor.js
-function checkBackdoorValidity(graph, minLen=3, maxLen=6){
+import { REG_COLS, START_REGION, GOAL_REGION } from './graph.js';
+
+// prune backdoors by hop distance
+export function pruneBackdoorsByHop(graph, minLen, maxLen){
+  const nodes = graph.nodes; const edges = graph.edges.slice();
+  
+  // build adjacency map excluding backdoors
+  const adjNoBack = {}; nodes.forEach(n => adjNoBack[n.id] = new Set());
+  edges.forEach(e => { if(e.type && e.type === 'backdoor') return; adjNoBack[e.from].add(e.to); adjNoBack[e.to].add(e.from); });
+  
+  // helper BFS function
+  function bfsNoBack(a,b){
+    const q=[a]; const dist={}; dist[a]=0;
+    while(q.length){ const v=q.shift(); if(v===b) return dist[v]; for(const nb of adjNoBack[v]) if(dist[nb]===undefined){ dist[nb]=dist[v]+1; q.push(nb); } }
+    return Infinity;
+  }
+  
+  // filter edges based on hop distance
+  const filtered = [];
+  for(const e of edges){
+    if(!(e.type && e.type === 'backdoor')){ filtered.push(e); }
+    else{
+      const hops = bfsNoBack(e.from,e.to);
+      if(hops !== Infinity && hops >= minLen && hops <= maxLen) filtered.push(e);
+    }
+  }
+  graph.edges = filtered;
+}
+
+// Aggiunge backdoor agli edges secondo i parametri richiesti
+export function addBackdoors(nodes, regions, edges, backdoorPct, minLen, maxLen) {
+  // Puoi adattare la logica qui secondo la tua buildEdges, ma solo per la parte backdoor
+  // Qui si assume che edges sia già popolato con archi normali
+  // Restituisce un nuovo array edges con backdoor aggiunte
+
+  // ...implementazione semplificata...
+  // (Qui puoi incollare la tua logica di selezione candidati e aggiunta backdoor)
+  // Per esempio:
+  // - calcola candidati border
+  // - seleziona coppie valide
+  // - aggiungi edge {from, to, type:'backdoor'} a edges
+
+  // Esempio placeholder (da sostituire con la tua logica reale):
+  // return edges.concat([{from: 0, to: 1, type: 'backdoor'}]);
+  return edges; // placeholder: nessuna backdoor aggiunta
+}
+
+// backdoor validity check
+export function checkBackdoorValidity(graph, minLen=3, maxLen=6){
   if(!graph) return {failures:['no graph']};
   const nodes = graph.nodes; const edges = graph.edges;
-  const backdoors = edges.filter(e=>e.type==='backdoor');
+  const backdoors = edges.filter(e=>e.type && e.type === 'backdoor');
   const failures=[];
   if(backdoors.length===0) failures.push('No backdoors generated');
 
@@ -21,7 +68,7 @@ function checkBackdoorValidity(graph, minLen=3, maxLen=6){
 
   // hop-length ignoring backdoors
   const adjNoBack={}; nodes.forEach(n=>adjNoBack[n.id]=new Set());
-  edges.forEach(e=>{ if(e.type==='backdoor') return; adjNoBack[e.from].add(e.to); adjNoBack[e.to].add(e.from); });
+  edges.forEach(e=>{ if(e.type && e.type === 'backdoor') return; adjNoBack[e.from].add(e.to); adjNoBack[e.to].add(e.from); });
   function bfsNoBack(a,b){
     const q=[a]; const dist={}; dist[a]=0;
     while(q.length){ const v=q.shift(); if(v===b) return dist[v]; for(const nb of adjNoBack[v]) if(dist[nb]===undefined){ dist[nb]=dist[v]+1; q.push(nb); } }
@@ -33,7 +80,7 @@ function checkBackdoorValidity(graph, minLen=3, maxLen=6){
 }
 
 // articulation points (for choke detection)
-function articulationPoints(nodes, edges){
+export function articulationPoints(nodes, edges){
   const adj={}; nodes.forEach(n=>adj[n.id]=[]);
   edges.forEach(e=>{ adj[e.from].push(e.to); adj[e.to].push(e.from); });
   const disc={}, low={}, parent={}, ap=new Set(); let time=0;
@@ -49,7 +96,7 @@ function articulationPoints(nodes, edges){
 }
 
 // fix choke points: add short inter-region bridges (best-effort)
-function fixChokePoints(graph, limit=2){
+export function fixChokePoints(graph, limit=2){
   let attempts=0;
   while(attempts<200){
     const aps = articulationPoints(graph.nodes, graph.edges);
