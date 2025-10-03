@@ -19,7 +19,7 @@ export async function loadPartials() {
     console.log('Partials loaded via fetch.');  // Success
   } catch (error) {
     console.warn('Load partials failed:', error);  // Fallback
-    // Fallback: incolla HTML diretto qui se fetch rompe (dal tuo originale)
+    // Fallback: incolla HTML diretto qui se fetch rompe (dal tuo originale, + input bias)
     document.getElementById('panel').innerHTML = `
       <div id="panel" class="card">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -31,6 +31,7 @@ export async function loadPartials() {
           <label class="small">Backdoor % <input id="backdoorPct" type="number" value="8" style="width:70px;margin-left:8px"></label>
           <label class="small">Min backdoor hops <input id="backdoorMinLen" type="number" value="3" style="width:70px;margin-left:8px"></label>
           <label class="small">Max backdoor hops <input id="backdoorMaxLen" type="number" value="6" style="width:70px;margin-left:8px"></label>
+          <label class="small">Diagonal Bias % <input id="diagonalBiasPct" type="number" value="70" min="0" max="100" style="width:70px;margin-left:8px"></label>  <!-- ← Aggiunto input bias -->
           <div style="display:flex;gap:8px;margin-top:6px">
             <button id="runBtn" class="btn">Genera & Valida</button>
             <button id="simBtn" class="btn">Gioca Run</button>
@@ -64,10 +65,11 @@ export async function initUI() {
   const backdoorPctEl = el('backdoorPct');
   const minLenEl = el('backdoorMinLen');
   const maxLenEl = el('backdoorMaxLen');
+  const diagonalBiasEl = el('diagonalBiasPct');  // ← Fix: qui, non nel click
   const runBtn = el('runBtn');
   const simBtn = el('simBtn');
   const infoEl = el('info');
-  if (!runBtn || !simBtn || !infoEl) { console.error('UI elements missing!'); return; }
+  if (!runBtn || !simBtn || !infoEl || !diagonalBiasEl) { console.error('UI elements missing!'); return; }
 
   // Imposta info (dal tuo originale)
   infoEl.textContent = `${TOTAL_NODES} nodi — ${REG_ROWS}×${REG_COLS} quartieri — Start ${String.fromCharCode(65 + Math.floor(START_REGION / REG_COLS))}${START_REGION % REG_COLS + 1} — Tower ${String.fromCharCode(65 + Math.floor(GOAL_REGION / REG_COLS))}${GOAL_REGION % REG_COLS + 1}`;
@@ -75,8 +77,7 @@ export async function initUI() {
   // Expose for console (dal tuo originale)
   window.__graph_tools = { makeGraph, pruneBackdoorsByHop, checkBackdoorValidity, simulateTrace };
 
-  // Handler Genera & Valida (dal tuo originale, con debug)
-  // Handler Genera & Valida (dal tuo originale, con debug dettagliato sui failures)
+  // Handler Genera & Valida (con debug dettagliato sui failures)
   runBtn.addEventListener('click', async () => { 
     try {  // ← Fix: cattura errori
       console.log('RunBtn clicked');
@@ -84,8 +85,7 @@ export async function initUI() {
       const backdoorPct = parseFloat(backdoorPctEl.value)||8; 
       const minLen = parseInt(minLenEl.value,10)||3; 
       const maxLen = parseInt(maxLenEl.value,10)||6; 
-      const diagonalBiasEl = el('diagonalBiasPct');  // ← Fix: definisci l'elemento input
-      const diagonalBiasPct = parseFloat(diagonalBiasEl.value)||70;  // ← Leggi input
+      const diagonalBiasPct = parseFloat(diagonalBiasEl.value)||70;  // ← Ora el è definito
       
       log('Generazione: backdoorPct='+backdoorPct+', min='+minLen+', max='+maxLen+', diagonalBias='+diagonalBiasPct+'%'); 
       console.log('Params:', {backdoorPct, minLen, maxLen, diagonalBiasPct});
@@ -128,6 +128,19 @@ export async function initUI() {
       draw(canvas, ctx, currentGraph, currentPlayerPos, null, 0);
       console.log('Draw called.');
       log('Grafo valido generato.');
+      
+      // ← Fix: log % diagonali qui, dopo success (su graph valido)
+      const diagCount = currentGraph.edges.filter(e => {
+        const a = currentGraph.nodes.find(n => n.id === e.from);
+        const b = currentGraph.nodes.find(n => n.id === e.to);
+        if (!a || !b) return false;
+        const dx = Math.abs(a.x - b.x) > 5;
+        const dy = Math.abs(a.y - b.y) > 5;  // ← Fix: a.y - b.y
+        return dx && dy;
+      }).length;
+      const pctDiag = (diagCount / currentGraph.edges.length * 100).toFixed(0);
+      log(`% Diagonali: ${pctDiag}% (bias: ${diagonalBiasPct}%)`);
+      
     } catch (error) {  // ← Fix: cattura e logga errori
       console.error('Errore in generazione:', error);
       log('Errore: ' + error.message);
@@ -135,10 +148,10 @@ export async function initUI() {
   });
 
   // Handler Gioca Run (dal tuo originale, con fix playTrace)
-    simBtn.addEventListener('click', () => {
+  simBtn.addEventListener('click', () => {
     if (!currentGraph) {
-        alert('Genera prima un grafo valido');
-        return;
+      alert('Genera prima un grafo valido');
+      return;
     }
     const res = simulateTrace(currentGraph);
     if (res.outcome === 'victory') log('Victory in ' + res.turns + ' turns');
@@ -146,13 +159,13 @@ export async function initUI() {
     else log('Timeout');
     playbackTrace = res.trace;
     playbackTimer = playTrace(playbackTrace, canvas, ctx, currentGraph, currentPlayerPos, playbackTimer);  // Ora passa currentPlayerPos, ma draw lo ignora in playback
-    });
+  });
 
-    // Aggiungi dopo simBtn
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Salva Grafo';
-    saveBtn.className = 'btn';
-    saveBtn.addEventListener('click', () => {
+  // Aggiungi dopo simBtn
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Salva Grafo';
+  saveBtn.className = 'btn';
+  saveBtn.addEventListener('click', () => {
     if (!currentGraph) return alert('Genera prima!');
     const dataStr = JSON.stringify(currentGraph, null, 2);
     const blob = new Blob([dataStr], {type: 'application/json'});
@@ -161,8 +174,8 @@ export async function initUI() {
     a.href = url;
     a.download = 'graph-map.json';
     a.click();
-    });
-    simBtn.parentNode.appendChild(saveBtn);  // Aggiunge bottone al div
+  });
+  simBtn.parentNode.appendChild(saveBtn);  // Aggiunge bottone al div
 
   // Init draw e log (dal tuo originale)
   draw(canvas, ctx, currentGraph, currentPlayerPos, null, 0);

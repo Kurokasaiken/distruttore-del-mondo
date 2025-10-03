@@ -1,14 +1,24 @@
 import { generateRegions } from './regions.js';
 import { distributeNodes, nearestInRegion } from './nodes.js';
 import { buildEdges } from './edges.js';
+import { generateBackdoors } from './backdoors.js';  // ← Aggiunto import per backdoor
 import { REG_COLS, GOAL_REGION, START_REGION, TOTAL_NODES, NUM_REGIONS } from './config.js';
-// Rimossa la riga: import { el, log } from './utils.js'; – non serve qui
 
 export function makeGraph(params) {
   const regions = generateRegions();
   const nodes = distributeNodes(regions);
-  const edges = buildEdges(nodes, regions, params.backdoorPct, params.minLen, params.maxLen, params.diagonalBiasPct || 70);
 
+  // Genera baseEdges (intra MST + extra + inter) – senza backdoor
+  const baseEdges = buildEdges(nodes, regions, params.diagonalBiasPct || 70);
+
+  // Genera backdoor su baseEdges
+  const backdoorResult = generateBackdoors(nodes, regions, baseEdges, params.backdoorPct, params.minLen, params.maxLen, {startRegion: START_REGION, goalRegion: GOAL_REGION});
+  if (backdoorResult.meta.failures.length > 0) console.warn('[MakeGraph] Backdoor failures:', backdoorResult.meta.failures);
+
+  // Combina tutto
+  const edges = [...baseEdges, ...backdoorResult.edges];
+
+  // Assegna start/goal (usa importata, non ridefinire)
   const s = nearestInRegion(nodes, regions, START_REGION);
   s.type = 'start';
   const g = nearestInRegion(nodes, regions, GOAL_REGION);
@@ -19,7 +29,7 @@ export function makeGraph(params) {
     regions,
     nodes,
     edges,
-    params
+    params: { ...params, backdoorMeta: backdoorResult.meta }  // Aggiungi meta per debug (es. forwardPct)
   };
 }
 
@@ -146,7 +156,5 @@ export function checkBackdoorValidity(graph, minLen, maxLen) {
     avgHops: avgHops.toFixed(2),  // Aggiunto per debug
     variety,
     score: score.toFixed(2)  // Score finale 0-1
-  };
-
-  return { total, forward, lateral, forwardPct, lateralPct, failures };
+  };  // ← Fix: solo un return, rimuovi duplicato e 'edges' non definito
 }

@@ -1,4 +1,4 @@
-import { TOTAL_NODES, REG_ROWS, REG_COLS } from './config.js';
+import { TOTAL_NODES } from './config.js';  // ← Fix: solo TOTAL_NODES usato qui; REG_ROWS/COLS non servono
 
 export function distributeNodes(regions) {
   const base = Math.floor(TOTAL_NODES / regions.length);
@@ -23,13 +23,15 @@ export function distributeNodes(regions) {
     const spacingX = innerW / cols;
     const spacingY = innerH / rows;
     let placed = 0;
-    for (let r = 0; r < rows && placed < cnt; r++) {
-      for (let c = 0; c < cols && placed < cnt; c++) {
-        const cx = bb.x0 + margin + (c + 0.5) * spacingX;
-        const cy = bb.y0 + margin + (r + 0.5) * spacingY;
-        const jitterX = (Math.random() - 0.5) * Math.min(spacingX * 0.18, 6);
-        const jitterY = (Math.random() - 0.5) * Math.min(spacingY * 0.18, 6);
-        const x = Math.round(cx + jitterX), y = Math.round(cy + jitterY);
+    for (let r = 0; r < rows && placed < cnt; r++) {  // ← Loop righe (r = row)
+      for (let c = 0; c < cols && placed < cnt; c++) {  // ← Loop colonne (c = column)
+        const cx = bb.x0 + margin + (c + 0.5) * spacingX;  // ← Posizione centrale colonna c
+        const cy = bb.y0 + margin + (r + 0.5) * spacingY;  // ← Posizione centrale riga r
+        // ← Fix: jitter calcolato qui, per ogni nodo, con valore ridotto per più allineamenti
+        const jitterX = (Math.random() - 0.5) * Math.min(spacingX * 0.05, 2);  // Max 2px, per più dx=0
+        const jitterY = (Math.random() - 0.5) * Math.min(spacingY * 0.05, 2);  // Max 2px, per più dy=0
+        const x = Math.round(cx + jitterX);
+        const y = Math.round(cy + jitterY);
         nodes.push({ id: id, x, y, region: rid, type: 'normal' });
         id++;
         placed++;
