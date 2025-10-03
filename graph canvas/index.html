@@ -1,225 +1,28 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8" />
-<title>Graph Canvas — Updated</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <title>Graph Canvas — Updated</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="app">
-  <div id="panel" class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0">Graph Builder</h3><div class="small">150 nodi — 3×3 quartieri — Start B1 — Tower B3</div></div><div class="small">Preview</div></div>
-    <hr />
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <label class="small">Backdoor % <input id="backdoorPct" type="number" value="8" style="width:70px;margin-left:8px"></label>
-      <label class="small">Min backdoor hops <input id="backdoorMinLen" type="number" value="3" style="width:70px;margin-left:8px"></label>
-      <label class="small">Max backdoor hops <input id="backdoorMaxLen" type="number" value="6" style="width:70px;margin-left:8px"></label>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <button id="runBtn" class="btn">Genera & Valida</button>
-        <button id="simBtn" class="btn">Gioca Run</button>
-      </div>
-    </div>
-    <div class="card" style="margin-top:12px">
-      <div class="small">Log</div>
-      <pre id="log" style="height:140px;overflow:auto;background:transparent;color:#9fd3df;padding:8px;border-radius:6px;">Pronto</pre>
-      <div class="legend">
-        <div class="item"><div class="swatch" style="background:rgba(14,165,233,0.22)"></div>Regioni</div>
-        <div class="item"><div class="swatch" style="background:#0f1724;border:2px solid #e6eef8"></div>Nodi</div>
-        <div class="item"><div class="swatch" style="background:var(--edge)"></div>Archi</div>
-        <div class="item"><div class="swatch" style="background:var(--accent-c)"></div>Backdoor</div>
-        <div class="item"><div class="swatch" style="background:#60a5fa"></div>Start</div>
-        <div class="item"><div class="swatch" style="background:#34d399"></div>Tower</div>
-        <div class="item"><div class="swatch" style="background:#ef4444"></div>Pattuglie</div>
-        <div class="item"><div class="swatch" style="background:#FFD700"></div>Giocatore</div>
-      </div>
-    </div>
+  <div id="app">
+    <!-- Partials caricati qui -->
+    <div id="panel"></div>
+    <canvas id="graphCanvas" width="1100" height="780"></canvas>
   </div>
 
-  <canvas id="graphCanvas" width="1100" height="780"></canvas>
-</div>
-
-<script type="module">
-import { el, log } from './utils.js';
-
-(() => {
-  const canvas = el('graphCanvas');
-  const ctx = canvas.getContext('2d');
-  const backdoorPctEl = el('backdoorPct');
-  const minLenEl = el('backdoorMinLen');
-  const maxLenEl = el('backdoorMaxLen');
-  const runBtn = el('runBtn');
-  const simBtn = el('simBtn');
-
-  // constants
-  const TOTAL_NODES = 150; const REG_ROWS = 3, REG_COLS = 3, NUM_REGIONS = 9; const START_REGION = 3, GOAL_REGION = 5;
-  let currentGraph = null; let currentPlayerPos = null; let playbackTrace = null, playbackIdx=0, playbackTimer=null;
-
-  // regions grid generator (expanded)
-  function generateRegions(cell=160, scale=1.25){ const regs=[]; const w=cell*scale, h=cell*scale; for(let r=0;r<REG_ROWS;r++) for(let c=0;c<REG_COLS;c++){ const id=r*REG_COLS+c; const x0=c*w, y0=r*h; regs.push({id:id,name:String.fromCharCode(65+r)+String(c+1),bbox:{x0:x0,y0:y0,x1:x0+w,y1:y0+h},seed:[x0+w/2,y0+h/2]}); } return regs; }
-
-  // nodes distribution snap to grid inside region boxes
-  function distributeNodes(regions){ const base = Math.floor(TOTAL_NODES/regions.length); const counts = new Array(regions.length).fill(base); let rem = TOTAL_NODES - counts.reduce((a,b)=>a+b,0); let idx=0; while(rem>0){ counts[idx%regions.length]++; idx++; rem--; }
-    const nodes=[]; let id=0; for(let rid=0; rid<regions.length; rid++){ const cnt=counts[rid]; const bb=regions[rid].bbox; const margin=12; const innerW=bb.x1-bb.x0-2*margin; const innerH=bb.y1-bb.y0-2*margin; const cols=Math.max(1, Math.round(Math.sqrt(cnt*(innerW/innerH)))); const rows=Math.max(1, Math.ceil(cnt/cols)); const spacingX = innerW/cols; const spacingY = innerH/rows; let placed=0; for(let r=0;r<rows && placed<cnt;r++){ for(let c=0;c<cols && placed<cnt;c++){ const cx = bb.x0+margin+(c+0.5)*spacingX; const cy = bb.y0+margin+(r+0.5)*spacingY; const jitterX = (Math.random()-0.5)*Math.min(spacingX*0.18,6); const jitterY = (Math.random()-0.5)*Math.min(spacingY*0.18,6); const x=Math.round(cx+jitterX), y=Math.round(cy+jitterY); nodes.push({id:id,x:x,y:y,region:rid,type:'normal'}); id++; placed++; } }
-      while(placed<cnt){ const x=Math.round(Math.random()*(bb.x1-bb.x0-24)+bb.x0+12); const y=Math.round(Math.random()*(bb.y1-bb.y0-24)+bb.y0+12); nodes.push({id:id,x:x,y:y,region:rid,type:'normal'}); id++; placed++; }
-    }
-    while(nodes.length<TOTAL_NODES){ const r=Math.floor(Math.random()*regions.length); const bb=regions[r].bbox; nodes.push({id:nodes.length,x:Math.round(Math.random()*(bb.x1-bb.x0-24)+bb.x0+12),y:Math.round(Math.random()*(bb.y1-bb.y0-24)+bb.y0+12),region:r,type:'normal'}); }
-    nodes.forEach((n,i)=>n.id=i); return nodes; }
-
-  // build edges (intra MST + extras + inter + backdoor candidates) with prefilter on hop-distance
-  function buildEdges(nodes, regions, backdoorPct, minLen, maxLen){ minLen = (typeof minLen==='number')?minLen:3; maxLen=(typeof maxLen==='number')?maxLen:6; const coord={}; nodes.forEach(n=>coord[n.id]=n); const edgesMap={}; function addEdge(a,b,type){ if(a===b) return; const key=a<b? a+','+b : b+','+a; if(!edgesMap[key]) edgesMap[key]={from:Math.min(a,b),to:Math.max(a,b),type:type||'intra'}; }
-    // helper: row of region (0=A,1=B,2=C)
-    function regionRow(region){ return Math.floor(region/REG_COLS); }
-
-    // group by region
-    const byRegion={}; nodes.forEach(n=>{ byRegion[n.region]=byRegion[n.region]||[]; byRegion[n.region].push(n); });
-    // MST per region
-    for(const rid in byRegion){ const list=byRegion[rid]; if(!list||list.length===0) continue; const used=new Set(); const rem=new Set(list.map(x=>x.id)); const first=list[0].id; used.add(first); rem.delete(first); while(rem.size>0){ let bestD=Infinity, ba=null, bb=null; used.forEach(u=>{ rem.forEach(v=>{ const d=Math.hypot(coord[u].x-coord[v].x, coord[u].y-coord[v].y); if(d<bestD){ bestD=d; ba=u; bb=v; } }); }); if(ba!==null){ addEdge(ba,bb,'intra'); used.add(bb); rem.delete(bb); } else break; } }
-    // local extras
-    const k_extra=2; nodes.forEach(n=>{ const same = nodes.filter(m=>m.region===n.region && m.id!==n.id); same.sort((a,b)=>Math.hypot(a.x-n.x,a.y-n.y)-Math.hypot(b.x-n.x,b.y-n.y)); for(let i=0;i<Math.min(k_extra,same.length);i++) addEdge(n.id,same[i].id,'intra'); });
-    // inter-region adjacencies
-    const adjPairs=[]; for(let r=0;r<NUM_REGIONS;r++){ const rr=Math.floor(r/REG_COLS), rc=r%REG_COLS; [[0,1],[1,0]].forEach(d=>{ const nr=rr+d[0], nc=rc+d[1]; if(nr>=0 && nr<REG_ROWS && nc>=0 && nc<REG_COLS) adjPairs.push([r, nr*REG_COLS+nc]); }); }
-    adjPairs.forEach(pair=>{ const [a,b]=pair; const A=nodes.filter(n=>n.region===a); const B=nodes.filter(n=>n.region===b); if(A.length===0||B.length===0) return; const pairs=[]; A.forEach(na=>B.forEach(nb=>pairs.push({a:na.id,b:nb.id,d:Math.hypot(na.x-nb.x,na.y-nb.y)}))); pairs.sort((u,v)=>u.d-v.d); const num = Math.random()<0.5?1:(Math.random()<0.5?2:3); for(let i=0;i<num && i<pairs.length;i++) addEdge(pairs[i].a,pairs[i].b,'inter'); });
-    // prepare backdoor candidates (border nodes)
-    const num_backdoors = Math.max(1, Math.round((backdoorPct/100)*nodes.length));
-    const mapBBox = {x0:Math.min(...regions.map(r=>r.bbox.x0)), y0:Math.min(...regions.map(r=>r.bbox.y0)), x1:Math.max(...regions.map(r=>r.bbox.x1)), y1:Math.max(...regions.map(r=>r.bbox.y1)) };
-    const borderCandidates = nodes.filter(n=>{ if(n.region===START_REGION) return false; const rbb = regions[n.region].bbox; const padX=(rbb.x1-rbb.x0)*0.16, padY=(rbb.y1-rbb.y0)*0.16; const regDist = Math.min(Math.abs(n.x-rbb.x0),Math.abs(n.x-rbb.x1),Math.abs(n.y-rbb.y0),Math.abs(n.y-rbb.y1)); const mapEdgeDist = Math.min(Math.abs(n.x-mapBBox.x0),Math.abs(n.x-mapBBox.x1),Math.abs(n.y-mapBBox.y0),Math.abs(n.y-mapBBox.y1)); return regDist <= Math.max(padX,padY) || mapEdgeDist <= Math.max(padX,padY); });
-    const candPairs=[]; for(let i=0;i<borderCandidates.length;i++) for(let j=i+1;j<borderCandidates.length;j++){ const A=borderCandidates[i], B=borderCandidates[j]; if(A.region===B.region) continue; candPairs.push({a:A,b:B,d:Math.hypot(A.x-B.x,A.y-B.y)});} candPairs.sort((u,v)=>v.d-u.d);
-    // build adjacency without backdoors
-    const adjNoBack = {}; nodes.forEach(n=>adjNoBack[n.id]=new Set()); for(const k in edgesMap){ const e=edgesMap[k]; if(!e) continue; adjNoBack[e.from].add(e.to); adjNoBack[e.to].add(e.from); }
-    function bfsNoBack(a,b){ const q=[a]; const dist={}; dist[a]=0; while(q.length){ const v=q.shift(); if(v===b) return dist[v]; for(const nb of adjNoBack[v]) if(dist[nb]===undefined){ dist[nb]=dist[v]+1; q.push(nb); } } return Infinity; }
-    function regionDistToGoal(region){ const rr=Math.floor(region/REG_COLS), rc=region%REG_COLS; const gr=Math.floor(GOAL_REGION/REG_COLS), gc=GOAL_REGION%REG_COLS; return Math.abs(rr-gr)+Math.abs(rc-gc); }
-    const forwardTarget = Math.round(num_backdoors*0.5); const lateralTarget = num_backdoors-forwardTarget; let f=0,l=0; const used=new Set();
-    // first pass: add only backdoors that satisfy hop-length constraints and forward-only in rows A/C
-    for(const p of candPairs){ if(f>=forwardTarget && l>=lateralTarget) break; const key = p.a.id<p.b.id? p.a.id+','+p.b.id : p.b.id+','+p.a.id; if(used.has(key)) continue; const hops = bfsNoBack(p.a.id,p.b.id); if(hops===Infinity) continue; if(hops < minLen || hops > maxLen) continue; const da=regionDistToGoal(p.a.region), db=regionDistToGoal(p.b.region); const isForward = Math.min(da,db) < Math.max(da,db); const rowA = regionRow(p.a.region), rowB = regionRow(p.b.region); const forwardAllowed = isForward && rowA!==1 && rowB!==1; if(forwardAllowed && f<forwardTarget){ addEdge(p.a.id,p.b.id,'backdoor'); used.add(key); f++; } else if(!isForward && l<lateralTarget){ addEdge(p.a.id,p.b.id,'backdoor'); used.add(key); l++; } }
-    // ponderated second pass (prefer candidates close to hop range)
-    if(f + l < num_backdoors){ const remaining = candPairs.filter(p=>{ const key = p.a.id<p.b.id? p.a.id+','+p.b.id : p.b.id+','+p.a.id; return !used.has(key); }).map(p=>{ const hops = bfsNoBack(p.a.id,p.b.id); const diff = (hops===Infinity)? Infinity : (hops < minLen ? (minLen - hops) : (hops > maxLen ? hops - maxLen : 0)); return Object.assign({}, p, {hops, diff}); }); remaining.sort((A,B)=>{ if(A.diff !== B.diff) return A.diff - B.diff; return B.d - A.d; }); for(const p of remaining){ if(f + l >= num_backdoors) break; if(p.hops===Infinity) continue; const key = p.a.id<p.b.id? p.a.id+','+p.b.id : p.b.id+','+p.a.id; if(used.has(key)) continue; const da=regionDistToGoal(p.a.region), db=regionDistToGoal(p.b.region); const isForward = Math.min(da,db) < Math.max(da,db); const rowA = regionRow(p.a.region), rowB = regionRow(p.b.region); const forwardAllowed = isForward && rowA!==1 && rowB!==1; addEdge(p.a.id,p.b.id,'backdoor'); used.add(key); if(forwardAllowed) f++; else l++; } }
-    // final fill: allow any remaining candidates but classify forward only if rows A/C
-    if(f + l < num_backdoors){ const freeCandidates = candPairs.filter(p=>{ const key = p.a.id<p.b.id? p.a.id+','+p.b.id : p.b.id+','+p.a.id; return !used.has(key); }); for(const p of freeCandidates){ if(f + l >= num_backdoors) break; const key = p.a.id<p.b.id? p.a.id+','+p.b.id : p.b.id+','+p.a.id; addEdge(p.a.id,p.b.id,'backdoor'); used.add(key); const da=regionDistToGoal(p.a.region), db=regionDistToGoal(p.b.region); const isForward = Math.min(da,db) < Math.max(da,db); const rowA = regionRow(p.a.region), rowB = regionRow(p.b.region); if(isForward && rowA!==1 && rowB!==1) f++; else l++; } }
-    return Object.keys(edgesMap).map(k=>edgesMap[k]); }
-// make graph
-  function makeGraph(params){ const regions = generateRegions(); const nodes = distributeNodes(regions); const edges = buildEdges(nodes, regions, params.backdoorPct, params.minLen, params.maxLen);
-    function nearestInRegion(nodesArr, regionsArr, rid){ const list = nodesArr.filter(n=>n.region===rid); let best=list[0], bd=1e9; list.forEach(n=>{ const d=Math.hypot(n.x-regionsArr[rid].seed[0], n.y-regionsArr[rid].seed[1]); if(d<bd){ bd=d; best=n; } }); return best; }
-    const s = nearestInRegion(nodes, regions, START_REGION); s.type='start'; const g = nearestInRegion(nodes, regions, GOAL_REGION); g.type='goal';
-    return { meta:{total_nodes:TOTAL_NODES, regions:NUM_REGIONS, start_region:'B1', goal_region:'B3'}, regions:regions, nodes:nodes, edges:edges, params:params } }
-
-  function pruneBackdoorsByHop(graph, minLen, maxLen){ const nodes = graph.nodes; const edges = graph.edges.slice(); const adjNoBack = {}; nodes.forEach(n=>adjNoBack[n.id]=new Set()); edges.forEach(e=>{ if(e.type && e.type==='backdoor') return; adjNoBack[e.from].add(e.to); adjNoBack[e.to].add(e.from); }); function bfsNoBack(a,b){ const q=[a]; const dist={}; dist[a]=0; while(q.length){ const v=q.shift(); if(v===b) return dist[v]; for(const nb of adjNoBack[v]) if(dist[nb]===undefined){ dist[nb]=dist[v]+1; q.push(nb); } } return Infinity; }
-    const filtered = []; for(const e of edges){ if(!(e.type && e.type==='backdoor')) filtered.push(e); else { const hops = bfsNoBack(e.from,e.to); if(hops!==Infinity && hops>=minLen && hops<=maxLen) filtered.push(e); } }
-    graph.edges = filtered; }
-
-  function checkBackdoorValidity(graph, minLen, maxLen){ const nodes = graph.nodes; const edges = graph.edges; const backdoors = edges.filter(e=>e.type && e.type==='backdoor'); const failures=[]; if(backdoors.length===0) failures.push('No backdoors generated'); for(const e of backdoors){ const a = nodes.find(n=>n.id===e.from), b = nodes.find(n=>n.id===e.to); if(a.region===START_REGION || b.region===START_REGION) failures.push('Backdoor endpoint in start region: '+e.from+'-'+e.to); }
-    function rDist(r){ const rr=Math.floor(r/REG_COLS), rc=r%REG_COLS; const gr=Math.floor(GOAL_REGION/REG_COLS), gc=GOAL_REGION%REG_COLS; return Math.abs(rr-gr)+Math.abs(rc-gc); }
-    let forward=0,lateral=0; backdoors.forEach(e=>{ const a=nodes.find(n=>n.id===e.from), b=nodes.find(n=>n.id===e.to); const da=rDist(a.region), db=rDist(b.region); if(da===db) lateral++; else forward++; }); const total=backdoors.length; const forwardPct = total? Math.round(forward/total*100):0; const lateralPct = total? Math.round(lateral/total*100):0; if(total>0 && Math.abs(forwardPct-50)>10) failures.push('Forward/Lateral split out of ±10%: forward '+forwardPct+'% lateral '+lateralPct+'%');
-    // hop length check ignoring backdoors
-    const adjNoBack = {}; nodes.forEach(n=>adjNoBack[n.id]=new Set()); edges.forEach(e=>{ if(e.type && e.type==='backdoor') return; adjNoBack[e.from].add(e.to); adjNoBack[e.to].add(e.from); }); function bfsNoBack2(a,b){ const q=[a]; const dist={}; dist[a]=0; while(q.length){ const v=q.shift(); if(v===b) return dist[v]; for(const nb of adjNoBack[v]) if(dist[nb]===undefined){ dist[nb]=dist[v]+1; q.push(nb); } } return Infinity; }
-    for(const e of backdoors){ const hops = bfsNoBack2(e.from,e.to); if(hops===Infinity) failures.push('Backdoor disconnected: '+e.from+'-'+e.to); if(hops<minLen) failures.push('Backdoor shorter than min: hops='+hops+' '+e.from+'-'+e.to); if(hops>maxLen) failures.push('Backdoor longer than max: hops='+hops+' '+e.from+'-'+e.to); }
-    return {total:total, forward:forward, lateral:lateral, forwardPct:forwardPct, lateralPct:lateralPct, failures:failures}; }
-
-  // draw
-  function draw(){ if(!currentGraph){ ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='rgba(255,255,255,0.03)'; ctx.font='18px Inter'; ctx.fillText('Premi "Genera & Valida" per creare una mappa valida',24,48); return; }
-    const g = currentGraph; const all = g.regions.flatMap(r=>[r.bbox.x0,r.bbox.x1,r.bbox.y0,r.bbox.y1]); const xs = g.nodes.map(n=>n.x).concat(all); const ys = g.nodes.map(n=>n.y).concat(all); const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys); const pad=40; const sx=(canvas.width-2*pad)/(maxX-minX), sy=(canvas.height-2*pad)/(maxY-minY); const s=Math.min(sx,sy); const ox = pad - minX*s + (canvas.width-2*pad - (maxX-minX)*s)/2; const oy = pad - minY*s + (canvas.height-2*pad - (maxY-minY)*s)/2;
-    // background
-    ctx.clearRect(0,0,canvas.width,canvas.height); const bg=ctx.createLinearGradient(0,0,canvas.width,canvas.height); bg.addColorStop(0,'rgba(3,7,16,0.9)'); bg.addColorStop(1,'rgba(6,11,20,0.65)'); ctx.fillStyle=bg; ctx.fillRect(0,0,canvas.width,canvas.height);
-    // regions
-    const regionColors = ['rgba(14,165,233,0.12)','rgba(99,102,241,0.10)','rgba(96,165,250,0.10)','rgba(34,197,94,0.08)','rgba(236,72,153,0.08)','rgba(250,204,21,0.06)','rgba(79,70,229,0.06)','rgba(20,184,166,0.06)','rgba(96,165,250,0.06)'];
-    g.regions.forEach((r,idx)=>{ const bb=r.bbox; const x=bb.x0*s+ox, y=bb.y0*s+oy, w=(bb.x1-bb.x0)*s, h=(bb.y1-bb.y0)*s; ctx.fillStyle = regionColors[idx%regionColors.length]; ctx.fillRect(x,y,w,h); ctx.strokeStyle='rgba(255,255,255,0.03)'; ctx.lineWidth=1; ctx.strokeRect(x,y,w,h); });
-    // edges
-    g.edges.forEach(e=>{ const a = g.nodes.find(n=>n.id===e.from); const b = g.nodes.find(n=>n.id===e.to); const x1=a.x*s+ox, y1=a.y*s+oy, x2=b.x*s+ox, y2=b.y*s+oy; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); if(e.type==='backdoor'){ ctx.strokeStyle='rgba(251,146,60,0.95)'; ctx.setLineDash([10,6]); ctx.lineWidth=2.6; ctx.shadowBlur=12; ctx.shadowColor='rgba(251,146,60,0.12)'; ctx.stroke(); ctx.shadowBlur=0; ctx.setLineDash([]); } else { ctx.strokeStyle='rgba(148,163,184,0.35)'; ctx.lineWidth=1.2; ctx.stroke(); } });
-    // nodes
-    g.nodes.forEach(n=>{ const x=n.x*s+ox, y=n.y*s+oy; if(n.type==='start'){ ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.fillStyle='rgba(96,165,250,0.06)'; ctx.fill(); ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.fillStyle='#60a5fa'; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1; ctx.stroke(); } else if(n.type==='goal'){ ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.fillStyle='rgba(52,211,153,0.06)'; ctx.fill(); ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fillStyle='#34d399'; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1; ctx.stroke(); } else { ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='rgba(10,14,18,0.96)'; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1; ctx.stroke(); } });
-
-    // draw current player if set and not in playback
-    if(currentPlayerPos !== null && !playbackTrace){ const pn = g.nodes.find(n=>n.id===currentPlayerPos); if(pn){ const px = pn.x*s+ox, py = pn.y*s+oy; ctx.beginPath(); ctx.arc(px,py,16,0,Math.PI*2); ctx.fillStyle='rgba(255,215,0,0.12)'; ctx.fill(); ctx.beginPath(); ctx.arc(px,py,9,0,Math.PI*2); ctx.fillStyle='#FFD700'; ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1; ctx.stroke(); ctx.fillStyle='white'; ctx.font='11px monospace'; ctx.fillText('P', px-4, py+4); } }
-
-    // playback overlay
-    if(playbackTrace && playbackIdx>0 && playbackIdx<=playbackTrace.length){ const state = playbackTrace[Math.min(playbackIdx-1, playbackTrace.length-1)]; const adj = {}; g.nodes.forEach(n=>adj[n.id]=new Set()); g.edges.forEach(e=>{ adj[e.from].add(e.to); adj[e.to].add(e.from); }); const coneDepth = g.params.CONE_DEPTH||2, coneAngle=g.params.CONE_ANGLE||80; const coords = {}; g.nodes.forEach(n=>coords[n.id]={x:n.x,y:n.y});
-      state.patrols.forEach((p,pi)=>{ const pos=p.pos; const prev=p.prev!==undefined?p.prev:null; const center = g.nodes.find(n=>n.id===pos); const cx=center.x*s+ox, cy=center.y*s+oy; let dirVec={x:0,y:-1}; if(prev!==null){ const pn = g.nodes.find(n=>n.id===prev); dirVec.x = center.x - pn.x; dirVec.y = center.y - pn.y; const m = Math.hypot(dirVec.x,dirVec.y)||1; dirVec.x/=m; dirVec.y/=m; } else { const neigh = Array.from(adj[pos]); if(neigh.length>0){ const nn = g.nodes.find(n=>n.id===neigh[0]); dirVec.x = nn.x-center.x; dirVec.y = nn.y-center.y; const m=Math.hypot(dirVec.x,dirVec.y)||1; dirVec.x/=m; dirVec.y/=m; } }
-        const visited=new Set([pos]); const q=[{id:pos,depth:0}]; const coneNodes = [];
-        while(q.length){ const it=q.shift(); const node = g.nodes.find(n=>n.id===it.id); const vec = {x: node.x-center.x, y: node.y-center.y}; const mag=Math.hypot(vec.x,vec.y)||1; const dot=(vec.x*dirVec.x+vec.y*dirVec.y)/mag; const ang = Math.acos(Math.max(-1,Math.min(1,dot)))*180/Math.PI; if(ang <= coneAngle/2) coneNodes.push(node.id); if(it.depth < coneDepth){ for(const nb of Array.from(adj[it.id])) if(!visited.has(nb)){ visited.add(nb); q.push({id:nb,depth:it.depth+1}); } }
-        }
-        // draw cone nodes
-        ctx.fillStyle='rgba(239,68,68,0.12)'; coneNodes.forEach(nid=>{ const n=g.nodes.find(x=>x.id===nid); ctx.beginPath(); ctx.arc(n.x*s+ox, n.y*s+oy, 12,0,Math.PI*2); ctx.fill(); });
-        // draw patrol
-        ctx.beginPath(); ctx.arc(cx,cy,10,0,Math.PI*2); ctx.fillStyle='rgba(239,68,68,0.95)'; ctx.fill(); ctx.fillStyle='white'; ctx.font='10px monospace'; ctx.fillText(String(pi+1), cx-4, cy+4);
-      });
-      // draw player (gold) in playback
-      const pnode = g.nodes.find(n=>n.id===state.player); const px=pnode.x*s+ox, py=pnode.y*s+oy; ctx.beginPath(); ctx.arc(px,py,18,0,Math.PI*2); ctx.fillStyle='rgba(255,215,0,0.12)'; ctx.fill(); ctx.beginPath(); ctx.arc(px,py,10,0,Math.PI*2); ctx.fillStyle='#FFD700'; ctx.fill(); ctx.fillStyle='white'; ctx.font='12px monospace'; ctx.fillText('P', px-4, py+5);
-      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(12,12,120,28); ctx.fillStyle='white'; ctx.font='12px monospace'; ctx.fillText('Alert: '+state.alert, 18, 32);
-    }
-  }
-
-  // playback helpers
-  function playTrace(obj){ playbackTrace = obj.trace || obj; playbackIdx=0; if(playbackTimer) clearInterval(playbackTimer); const delay = 600; playbackTimer = setInterval(()=>{ playbackIdx++; if(playbackIdx>playbackTrace.length){ clearInterval(playbackTimer); playbackTimer=null; return; } draw(); }, delay); }
-
-  // simulateTrace (simple greedy) - shortened for now
-  function simulateTrace(graph){ const nodes = JSON.parse(JSON.stringify(graph.nodes)); const edges = graph.edges.slice(); const adj={}; nodes.forEach(n=>adj[n.id]=new Set()); edges.forEach(e=>{ adj[e.from].add(e.to); adj[e.to].add(e.from); }); const start = nodes.find(n=>n.type==='start').id; const goal = nodes.find(n=>n.type==='goal').id; let patrols = []; for(let r=0;r<NUM_REGIONS;r++){ const cand = nodes.filter(n=>n.region===r).map(n=>n.id); if(cand.length>0) patrols.push({pos:cand[Math.floor(Math.random()*cand.length)], intent:null, nextIntent:null, prev:null}); }
-    let alert = 1; let playerPos = start; const visited=new Set([start]); const trace=[]; trace.push({player:playerPos, patrols:patrols.map(p=>({pos:p.pos,prev:p.prev})), alert}); for(let t=1;t<=150;t++){ // player move greedy towards goal while avoiding patrols
-      const dToGoal = bfsHopSimple(adj, playerPos); const options = Array.from(adj[playerPos]); options.push(playerPos);
-      const patrolPos = patrols.map(p=>p.pos);
-      function nearestPatrolHop(node){ const d=bfsHopSimple(adj,node); let m=Infinity; for(const ppos of patrolPos) if(d[ppos]!==undefined) m=Math.min(m,d[ppos]); return m; }
-      let best=null, bestScore=-Infinity; for(const opt of options){ const h=(dToGoal[opt]===undefined)?999:dToGoal[opt]; const pDist = nearestPatrolHop(opt); const score = (pDist*0.6) - (h*1.0); if(score>bestScore){ bestScore=score; best=opt; } }
-      playerPos = best; visited.add(playerPos);
-      // alert roll
-      const r = Math.floor(Math.random()*100)+1; const prevAlert = alert; if(r> (100 - 10)) alert = Math.min(5, alert+1); else if(r<=5) alert = Math.max(1, alert-1);
-      // spawn/despawn simplified
-      if(alert > prevAlert){ for(let rg=0; rg<NUM_REGIONS; rg++){ if(Math.random() < 0.12){ const distMap = bfsHopSimple(adj, playerPos); const cand = nodes.filter(n=>n.region===rg && ((distMap[n.id]===undefined) || distMap[n.id]>=2)).map(n=>n.id); if(cand.length>0) patrols.push({pos:cand[Math.floor(Math.random()*cand.length)], intent:null, nextIntent:null, prev:null}); } } }
-      if(alert < prevAlert && patrols.length>0){ const distMap = bfsHopSimple(adj, playerPos); let closestIdx=null, bestd=Infinity; for(let pi=0; pi<patrols.length; pi++){ const dcur = distMap[patrols[pi].pos]===undefined?999:distMap[patrols[pi].pos]; if(dcur<bestd){ bestd=dcur; closestIdx=pi; } } if(closestIdx!==null) patrols.splice(closestIdx,1); }
-      // move patrols naive
-      for(const p of patrols){ p.prev = p.pos; const nb = Array.from(adj[p.pos]); if(nb.length>0) p.pos = nb[Math.floor(Math.random()*nb.length)]; }
-      trace.push({player:playerPos, patrols:patrols.map(pp=>({pos:pp.pos,prev:pp.prev})), alert}); if(patrols.some(pp=>pp.pos===playerPos)) return {outcome:'captured',turns:t,trace}; if(playerPos===goal) return {outcome:'victory',turns:t,trace}; }
-    return {outcome:'timeout',turns:150,trace}; }
-
-  function bfsHopSimple(adj,start){ const q=[start]; const dist={}; dist[start]=0; while(q.length){ const v=q.shift(); for(const nb of adj[v]) if(dist[nb]===undefined){ dist[nb]=dist[v]+1; q.push(nb); } } return dist; }
-
-  // UI handlers
-  runBtn.addEventListener('click', async ()=>{ 
-    const attemptsMax = 30; 
-    const backdoorPct = parseFloat(backdoorPctEl.value)||8; 
-    const minLen = parseInt(minLenEl.value,10)||3; 
-    const maxLen = parseInt(maxLenEl.value,10)||6; 
+  <script type="module">
+    import { loadPartials, initUI } from './js/ui.js';
     
-    log('Generazione: backdoorPct='+backdoorPct+', min='+minLen+', max='+maxLen); 
-    
-    let success=false; 
-    let last=null; 
-    
-    for(let i=1;i<=attemptsMax;i++){ 
-      const g = makeGraph({backdoorPct, minLen, maxLen, CONE_DEPTH:2, CONE_ANGLE:80}); 
-      pruneBackdoorsByHop(g,minLen,maxLen); 
-      const check = checkBackdoorValidity(g,minLen,maxLen); 
-      
-      if(check.failures.length===0){ 
-        currentGraph = g; 
-        success=true; 
-        last=check; 
-        break; 
-      } else { 
-        log('Tentativo '+i+' fallito ('+check.failures.length+' issue)'); 
-        last = check; 
-      } 
-    }
-    
-    if(success){ 
-      currentPlayerPos = currentGraph.nodes.find(n=>n.type==='start').id; 
-    } 
-    
-    if(!success){ 
-      log('Nessun grafo valido entro '+attemptsMax+' tentativi. Ultimo check: '+JSON.stringify(last)); 
-      return; 
-    } 
-    
-    draw(); 
-    log('Grafo valido generato.');
-  });
-
-  simBtn.addEventListener('click', ()=>{ if(!currentGraph){ alert('Genera prima un grafo valido'); return; } const res = simulateTrace(currentGraph); if(res.outcome==='victory') log('Victory in '+res.turns+' turns'); else if(res.outcome==='captured') log('Captured in '+res.turns+' turns'); else log('Timeout'); playTrace(res); });
-
-  // expose for console
-  window.__graph_tools = { makeGraph, pruneBackdoorsByHop, checkBackdoorValidity, simulateTrace };
-
-  // init
-  log('Interfaccia pronta. Premi Genera & Valida.'); draw();
-})();
-</script>
+    // Carica partials e avvia
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadPartials();  // Carica panel.html
+      await initUI();  // Setup handlers, draw init
+    });
+  </script>
+  <!-- Add Live Reload script -->
+  <script src="http://localhost:35729/livereload.js"></script>
 </body>
 </html>

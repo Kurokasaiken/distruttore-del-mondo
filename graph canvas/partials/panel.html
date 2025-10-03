@@ -1,0 +1,31 @@
+<div id="panel" class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div><h3 style="margin:0">Graph Builder</h3><div class="small" id="info">150 nodi — 3×3 quartieri — Start B1 — Tower B3</div></div>
+    <div class="small">Preview</div>
+  </div>
+  <hr />
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <label class="small">Backdoor % <input id="backdoorPct" type="number" value="8" style="width:70px;margin-left:8px"></label>
+    <label class="small">Min backdoor hops <input id="backdoorMinLen" type="number" value="3" style="width:70px;margin-left:8px"></label>
+    <label class="small">Max backdoor hops <input id="backdoorMaxLen" type="number" value="6" style="width:70px;margin-left:8px"></label>
+    <label class="small">Diagonal  % <input id="diagonalBiasPct" type="number" value="70" min="0" max="100" style="width:70px;margin-left:8px"></label>  <!-- ← Nuovo input -->
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button id="runBtn" class="btn">Genera & Valida</button>
+      <button id="simBtn" class="btn">Gioca Run</button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="small">Log</div>
+    <pre id="log" style="height:140px;overflow:auto;background:transparent;color:#9fd3df;padding:8px;border-radius:6px;">Pronto</pre>
+    <div class="legend">
+      <div class="item"><div class="swatch" style="background:rgba(14,165,233,0.22)"></div>Regioni</div>
+      <div class="item"><div class="swatch" style="background:#0f1724;border:2px solid #e6eef8"></div>Nodi</div>
+      <div class="item"><div class="swatch" style="background:var(--edge)"></div>Archi</div>
+      <div class="item"><div class="swatch" style="background:var(--accent-c)"></div>Backdoor</div>
+      <div class="item"><div class="swatch" style="background:#60a5fa"></div>Start</div>
+      <div class="item"><div class="swatch" style="background:#34d399"></div>Tower</div>
+      <div class="item"><div class="swatch" style="background:#ef4444"></div>Pattuglie</div>
+      <div class="item"><div class="swatch" style="background:#FFD700"></div>Giocatore</div>
+    </div>
+  </div>
+</div>
