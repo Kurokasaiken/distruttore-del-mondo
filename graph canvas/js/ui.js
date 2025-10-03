@@ -1,8 +1,8 @@
 import { el, log } from './utils.js';
 import { makeGraph, pruneBackdoorsByHop, checkBackdoorValidity } from './graph.js';
 import { draw } from './draw.js';
-import { simulateTrace, playTrace } from './simulate.js';
-import { TOTAL_NODES, NUM_REGIONS, START_REGION, GOAL_REGION, REG_ROWS, REG_COLS } from './config.js';
+import { simulateTrace, playTrace, markPatrolControl } from './simulate.js';  // ← Aggiunto markPatrolControl
+import { TOTAL_NODES, NUM_REGIONS, START_REGION, GOAL_REGION, REG_ROWS, REG_COLS, PATROL_DEPTH_DEFAULT } from './config.js';  // ← Aggiunto PATROL_DEPTH_DEFAULT
 
 let currentGraph = null;
 let currentPlayerPos = null;
@@ -19,7 +19,7 @@ export async function loadPartials() {
     console.log('Partials loaded via fetch.');  // Success
   } catch (error) {
     console.warn('Load partials failed:', error);  // Fallback
-    // Fallback: incolla HTML diretto qui se fetch rompe (dal tuo originale, + input bias)
+    // Fallback: incolla HTML diretto qui se fetch rompe (dal tuo originale, + input bias + patrol depth)
     document.getElementById('panel').innerHTML = `
       <div id="panel" class="card">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -31,7 +31,8 @@ export async function loadPartials() {
           <label class="small">Backdoor % <input id="backdoorPct" type="number" value="8" style="width:70px;margin-left:8px"></label>
           <label class="small">Min backdoor hops <input id="backdoorMinLen" type="number" value="3" style="width:70px;margin-left:8px"></label>
           <label class="small">Max backdoor hops <input id="backdoorMaxLen" type="number" value="6" style="width:70px;margin-left:8px"></label>
-          <label class="small">Diagonal Bias % <input id="diagonalBiasPct" type="number" value="70" min="0" max="100" style="width:70px;margin-left:8px"></label>  <!-- ← Aggiunto input bias -->
+          <label class="small">Diagonal Bias % <input id="diagonalBiasPct" type="number" value="70" min="0" max="100" style="width:70px;margin-left:8px"></label>
+          <label class="small">Perception Depth <input id="patrolDepth" type="number" value="2" min="0" max="5" style="width:70px;margin-left:8px"></label>  <!-- ← Aggiunto input depth -->
           <div style="display:flex;gap:8px;margin-top:6px">
             <button id="runBtn" class="btn">Genera & Valida</button>
             <button id="simBtn" class="btn">Gioca Run</button>
@@ -65,11 +66,12 @@ export async function initUI() {
   const backdoorPctEl = el('backdoorPct');
   const minLenEl = el('backdoorMinLen');
   const maxLenEl = el('backdoorMaxLen');
-  const diagonalBiasEl = el('diagonalBiasPct');  // ← Fix: qui, non nel click
+  const diagonalBiasEl = el('diagonalBiasPct');
+  const patrolDepthEl = el('patrolDepth');  // ← Nuovo input
   const runBtn = el('runBtn');
   const simBtn = el('simBtn');
   const infoEl = el('info');
-  if (!runBtn || !simBtn || !infoEl || !diagonalBiasEl) { console.error('UI elements missing!'); return; }
+  if (!runBtn || !simBtn || !infoEl || !diagonalBiasEl || !patrolDepthEl) { console.error('UI elements missing!'); return; }
 
   // Imposta info (dal tuo originale)
   infoEl.textContent = `${TOTAL_NODES} nodi — ${REG_ROWS}×${REG_COLS} quartieri — Start ${String.fromCharCode(65 + Math.floor(START_REGION / REG_COLS))}${START_REGION % REG_COLS + 1} — Tower ${String.fromCharCode(65 + Math.floor(GOAL_REGION / REG_COLS))}${GOAL_REGION % REG_COLS + 1}`;
@@ -96,7 +98,7 @@ export async function initUI() {
       for(let i=1;i<=attemptsMax;i++){ 
         console.log(`Tentativo ${i}/30 (bias: ${diagonalBiasPct}%)`);  // ← Log bias per traccia
         const g = makeGraph({backdoorPct, minLen, maxLen, diagonalBiasPct, CONE_DEPTH:2, CONE_ANGLE:80}); 
-        console.log('Graph generated:', g ? 'OK' : 'NULL');
+        console.log('Graph generated:', g ? 'OK (regions=' + g.regions?.length + ', nodes=' + g.nodes?.length + ', edges=' + g.edges?.length + ')' : 'NULL');
         pruneBackdoorsByHop(g,minLen,maxLen); 
         const check = checkBackdoorValidity(g,minLen,maxLen); 
         console.log('Check failures:', check.failures.length, check.failures);
@@ -116,6 +118,9 @@ export async function initUI() {
       if(success){ 
         currentPlayerPos = currentGraph.nodes.find(n=>n.type==='start').id; 
         console.log('Player pos set:', currentPlayerPos);
+        console.log('Graph OK: nodes=', currentGraph.nodes.length, 'edges=', currentGraph.edges.length, 'regions=', currentGraph.regions.length);  // ← Nuovo debug graph size
+      } else {
+        console.log('No graph: failures in validation');  // ← Nuovo debug
       } 
       
       if(!success){ 
@@ -128,6 +133,22 @@ export async function initUI() {
       draw(canvas, ctx, currentGraph, currentPlayerPos, null, 0);
       console.log('Draw called.');
       log('Grafo valido generato.');
+
+      // ← Nuovo: Inizializza pattuglie con depth e evidenzia iniziale
+      if (currentGraph) {
+        currentGraph.patrols = [];  // Se non già, genera sample pattuglie (es. 5 random)
+        for (let i = 0; i < 5; i++) {
+          const randNode = currentGraph.nodes[Math.floor(Math.random() * currentGraph.nodes.length)];
+          currentGraph.patrols.push({
+            id: i,
+            currentNode: randNode.id,
+            targetNode: null,  // Random target per demo
+            perceptionDepth: parseInt(patrolDepthEl.value) || PATROL_DEPTH_DEFAULT
+          });
+        }
+        const { controlledNodes, intentNodes } = markPatrolControl(currentGraph.patrols, currentGraph, parseInt(patrolDepthEl.value) || PATROL_DEPTH_DEFAULT);
+        draw(canvas, ctx, currentGraph, currentPlayerPos, null, 0, controlledNodes, intentNodes);  // ← Passa controlled/intent
+      }
       
       // ← Fix: log % diagonali qui, dopo success (su graph valido)
       const diagCount = currentGraph.edges.filter(e => {
@@ -145,6 +166,24 @@ export async function initUI() {
       console.error('Errore in generazione:', error);
       log('Errore: ' + error.message);
     }
+  });
+
+  // ← Nuovo: Handler per perception depth (aggiorna e ridisegna)
+  patrolDepthEl.addEventListener('input', () => {
+    if (!currentGraph) return;
+    const newDepth = parseInt(patrolDepthEl.value) || PATROL_DEPTH_DEFAULT;
+    // Aggiorna depth su tutte pattuglie (o globale)
+    if (playbackTrace) {
+      playbackTrace.forEach(state => {
+        state.patrols.forEach(p => p.perceptionDepth = newDepth);
+      });
+    } else if (currentGraph.patrols) {  // Se hai patrols nel graph
+      currentGraph.patrols.forEach(p => p.perceptionDepth = newDepth);
+    }
+    // Ricalcola e ridisegna
+    const { controlledNodes, intentNodes } = markPatrolControl(currentGraph.patrols || [], currentGraph, newDepth);
+    draw(canvas, ctx, currentGraph, currentPlayerPos, playbackTrace, playbackIdx, controlledNodes, intentNodes);  // ← Passa controlled/intent
+    log(`Perception depth aggiornata a ${newDepth}`);
   });
 
   // Handler Gioca Run (dal tuo originale, con fix playTrace)

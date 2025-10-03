@@ -6,3 +6,4 @@ export const K_EXTRA = 2;  // Extra edges per nodo
 export const CONE_DEPTH = 2, CONE_ANGLE = 80;
 export const SIM_MAX_TURNS = 150;
 export const PLAYBACK_DELAY = 600;
+export const PATROL_DEPTH_DEFAULT = 2;
