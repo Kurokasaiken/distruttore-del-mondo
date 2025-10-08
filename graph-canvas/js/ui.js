@@ -30,7 +30,11 @@ function syncDefaultsToUI() {
   const maxLenEl = el('backdoorMaxLen');
   const diagonalBiasEl = el('diagonalBiasPct');
   const patrolDepthEl = el('patrolDepth');
+  const degree3El = el('degree3Pct');
+  const degree4El = el('degree4Pct');
 
+  if (degree3El) degree3El.value = config.degree3Pct || 30;
+  if (degree4El) degree4El.value = config.degree4Pct || 15;
   if (backdoorPctEl) backdoorPctEl.value = config.backdoorPct;
   if (minLenEl) minLenEl.value = config.minLen;
   if (maxLenEl) maxLenEl.value = config.maxLen;
@@ -113,7 +117,8 @@ export async function initUI() {
     setupEventListeners({
       ...elements,
       canvas,
-      globals: { currentGraph: window.currentGraph, currentPlayerPos: window.currentPlayerPos, playbackTrace: window.playbackTrace, playbackIdx: window.playbackIdx },
+      globals: { currentGraph: window.currentGraph, currentPlayerPos: window.currentPlayerPos, playbackTrace: window.playbackTrace,
+         playbackIdx: window.playbackIdx,degree3El:elements.degree3El,degree4El:elements.degree4El },
       redraw
     });
 

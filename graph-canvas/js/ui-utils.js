@@ -52,7 +52,7 @@ export function setupEventListeners(elements) {
   runBtn?.addEventListener('click', async () => {
     try {
       console.log('RunBtn clicked');
-      const params = readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl);
+      const params = readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl,degree3Pct,degree4Pct);
       // Update config runtime per persistenza
       config.backdoorPct = params.backdoorPct;
       config.minLen = params.minLen;

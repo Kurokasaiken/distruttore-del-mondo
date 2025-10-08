@@ -16,12 +16,14 @@ export const config = {
   PATROL_DEPTH_DEFAULT: 2,
 
   // Variabili mutabili runtime (dal FE)
-  patrolDepth: 2,      // Iniziale, modifica via UI
-  coneAngle: 80,       // Idem
-  backdoorPct: 8,      // Default per UI
-  minLen: 3,
-  maxLen: 6,
+  patrolDepth: 2,  // Default da qui per readParams
+  coneAngle: 80,
+  backdoorPct: 8,  // Default da qui per readParams
+  minLen: 3,  // Default da qui per readParams
+  maxLen: 6,  // Default da qui per readParams
   diagonalBiasPct: 70,
+  degree3Pct: 30,  // Default % nodi con 3 edges
+  degree4Pct: 15,
   // Aggiungi altre se serve
 };
 

@@ -12,7 +12,8 @@ import { generateBackdoors } from './backdoors.js';
 export function makeGraph(params = {}) {
   const regions = generateRegions();
   const nodes = distributeNodes(regions);
-  const baseEdges = buildEdges(nodes, regions, params.diagonalBiasPct || config.diagonalBiasPct);
+  const baseEdges = buildEdges(nodes, regions, params.diagonalBiasPct || config.diagonalBiasPct,
+     params.degree3Pct, params.degree4Pct);
   const backdoorResult = generateBackdoors(
     nodes,
     regions,
