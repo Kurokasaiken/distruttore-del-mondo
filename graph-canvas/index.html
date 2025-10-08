@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <div id="app">
     <!-- Partials caricati qui -->
     <div id="panel"></div>
@@ -17,11 +18,23 @@
     import { loadPartials, initUI } from './js/ui.js';
     
     // Carica partials e avvia
+    // Nota: in js/ui.js -> loadPartials() sostituire:
+    //   const response = await fetch('partials/panel.html');
+    // con:
+    //   const response = await fetch('/partials/panel.html');  // Aggiungi / all'inizio
     document.addEventListener('DOMContentLoaded', async () => {
       await loadPartials();  // Carica panel.html
       await initUI();  // Setup handlers, draw init
     });
   </script>
 
+  <script type="module">
+  import { loadPartials, initUI } from './js/ui.js';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadPartials();  // Carica panel.html
+    await initUI();  // Setup handlers, draw init
+  });
+</script>
 </body>
 </html>

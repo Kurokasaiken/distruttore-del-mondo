@@ -1,9 +1,9 @@
-import { TOTAL_NODES } from './config.js';  // ← Fix: solo TOTAL_NODES usato qui; REG_ROWS/COLS non servono
+import { config } from './config.js';  // Fix: Importa oggetto config
 
 export function distributeNodes(regions) {
-  const base = Math.floor(TOTAL_NODES / regions.length);
+  const base = Math.floor(config.TOTAL_NODES / regions.length);
   const counts = new Array(regions.length).fill(base);
-  let rem = TOTAL_NODES - counts.reduce((a, b) => a + b, 0);
+  let rem = config.TOTAL_NODES - counts.reduce((a, b) => a + b, 0);
   let idx = 0;
   while (rem > 0) {
     counts[idx % regions.length]++;
@@ -23,13 +23,12 @@ export function distributeNodes(regions) {
     const spacingX = innerW / cols;
     const spacingY = innerH / rows;
     let placed = 0;
-    for (let r = 0; r < rows && placed < cnt; r++) {  // ← Loop righe (r = row)
-      for (let c = 0; c < cols && placed < cnt; c++) {  // ← Loop colonne (c = column)
-        const cx = bb.x0 + margin + (c + 0.5) * spacingX;  // ← Posizione centrale colonna c
-        const cy = bb.y0 + margin + (r + 0.5) * spacingY;  // ← Posizione centrale riga r
-        // ← Fix: jitter calcolato qui, per ogni nodo, con valore ridotto per più allineamenti
-        const jitterX = (Math.random() - 0.5) * Math.min(spacingX * 0.05, 2);  // Max 2px, per più dx=0
-        const jitterY = (Math.random() - 0.5) * Math.min(spacingY * 0.05, 2);  // Max 2px, per più dy=0
+    for (let r = 0; r < rows && placed < cnt; r++) {
+      for (let c = 0; c < cols && placed < cnt; c++) {
+        const cx = bb.x0 + margin + (c + 0.5) * spacingX;
+        const cy = bb.y0 + margin + (r + 0.5) * spacingY;
+        const jitterX = (Math.random() - 0.5) * Math.min(spacingX * 0.05, 2);
+        const jitterY = (Math.random() - 0.5) * Math.min(spacingY * 0.05, 2);
         const x = Math.round(cx + jitterX);
         const y = Math.round(cy + jitterY);
         nodes.push({ id: id, x, y, region: rid, type: 'normal' });
@@ -45,7 +44,7 @@ export function distributeNodes(regions) {
       placed++;
     }
   }
-  while (nodes.length < TOTAL_NODES) {
+  while (nodes.length < config.TOTAL_NODES) {
     const r = Math.floor(Math.random() * regions.length);
     const bb = regions[r].bbox;
     nodes.push({

@@ -1,6 +1,8 @@
+import { config } from './config.js';  // Fix: Importa oggetto config
+
 export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen, maxLen, opts = {}) {
   const {
-    startRegion = 3, goalRegion = 5, regRows = 3, regCols = 3, forwardWeight = 0.5
+    startRegion = config.START_REGION, goalRegion = config.GOAL_REGION, regRows = config.REG_ROWS, regCols = config.REG_COLS, forwardWeight = 0.5
   } = opts;
   console.log(`[Backdoors] Start: num_target=${Math.max(1, Math.round((backdoorPct / 100) * nodes.length))}, minHops=${minLen}, maxHops=${maxLen}, forwardTarget=${forwardWeight*100}%`);
 
@@ -14,7 +16,7 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
   const borderCandidates = nodes.filter(n => {
     if (n.region === startRegion) return false;
     const rbb = regions[n.region].bbox;
-    const padX = (rbb.x1 - rbb.x0) * 0.2, padY = (rbb.y1 - rbb.y0) * 0.2;  // ← Fix: 0.2 per bordi stretti
+    const padX = (rbb.x1 - rbb.x0) * 0.2, padY = (rbb.y1 - rbb.y0) * 0.2;
     const regDist = Math.min(
       Math.abs(n.x - rbb.x0), Math.abs(n.x - rbb.x1),
       Math.abs(n.y - rbb.y0), Math.abs(n.y - rbb.y1)
@@ -36,7 +38,7 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
       candPairs.push({ a: A, b: B, d: Math.hypot(A.x - B.x, A.y - B.y) });
     }
   }
-  candPairs.sort((u, v) => u.d - v.d);  // ← Fix: ascending d (low hops first, più B/C)
+  candPairs.sort((u, v) => u.d - v.d);
   console.log(`[Backdoors] Coppie generate: ${candPairs.length}, top d=${candPairs[0]?.d?.toFixed(0)}`);
 
   // Step 3: BFS per hops
@@ -85,7 +87,7 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
     const da = regionDistToGoal(p.a.region), db = regionDistToGoal(p.b.region);
     const isForward = Math.min(da, db) < Math.max(da, db);
     const rowA = regionRow(p.a.region), rowB = regionRow(p.b.region);
-    const forwardAllowed = isForward && (rowA !== 1 || rowB !== 1) && (rowA === 2 || rowB === 2 || (rowA === 1 && rowB === 2));  // ← Fix: allow B to C forward
+    const forwardAllowed = isForward && (rowA !== 1 || rowB !== 1) && (rowA === 2 || rowB === 2 || (rowA === 1 && rowB === 2));
     if (forwardAllowed && f < forwardTarget) {
       added.push({ from: p.a.id, to: p.b.id, type: 'backdoor' });
       used.add(key);
@@ -100,7 +102,7 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
   }
   console.log(`[Backdoors] Pass 1: Added ${added.length} (f=${f}, l=${l})`);
 
-  // Pass 2 e 3 invariati (ponderato + fill, con log regioni per debug)
+  // Pass 2: Ponderato
   if (f + l < num_backdoors) {
     console.log(`[Backdoors] Pass 2: Ponderato (remaining ${num_backdoors - (f + l)})`);
     const remaining = candPairs.filter(p => {
@@ -128,6 +130,7 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
     }
   }
 
+  // Pass 3: Fill
   if (f + l < num_backdoors) {
     console.log(`[Backdoors] Pass 3: Fill (remaining ${num_backdoors - (f + l)})`);
     const freeCandidates = candPairs.filter(p => {
