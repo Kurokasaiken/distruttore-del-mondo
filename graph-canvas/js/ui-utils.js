@@ -40,7 +40,7 @@ export function setupStaticInfo(container) {
 
 export function setupEventListeners(elements) {
   const { 
-    backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, runBtn, simBtn, 
+    backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, degree3El, degree4El, runBtn, simBtn,  // ← Aggiungi qui
     canvas,
     globals: { currentGraph, currentPlayerPos, playbackTrace, playbackIdx },
     redraw

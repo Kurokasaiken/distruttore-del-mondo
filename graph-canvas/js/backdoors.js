@@ -14,9 +14,9 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
     y1: Math.max(...regions.map(r => r.bbox.y1))
   };
   const borderCandidates = nodes.filter(n => {
-    if (n.region === startRegion) return false;
+    if (n.region === startRegion) return false;  // Fix: No backdoor in start
     const rbb = regions[n.region].bbox;
-    const padX = (rbb.x1 - rbb.x0) * 0.2, padY = (rbb.y1 - rbb.y0) * 0.2;
+    const padX = (rbb.x1 - rbb.x0) * 0.2, padY = (rbb.y1 - rbb.y0) * 0.2;  // Bordi 20%
     const regDist = Math.min(
       Math.abs(n.x - rbb.x0), Math.abs(n.x - rbb.x1),
       Math.abs(n.y - rbb.y0), Math.abs(n.y - rbb.y1)
@@ -25,7 +25,7 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
       Math.abs(n.x - mapBBox.x0), Math.abs(n.x - mapBBox.x1),
       Math.abs(n.y - mapBBox.y0), Math.abs(n.y - mapBBox.y1)
     );
-    return regDist <= Math.max(padX, padY) || mapEdgeDist <= Math.max(padX, padY);
+    return regDist <= Math.max(padX, padY) || mapEdgeDist <= Math.max(padX, padY);  // Fix: Prefer bordi
   });
   console.log(`[Backdoors] Candidati bordi: ${borderCandidates.length} nodi`);
 
@@ -165,4 +165,14 @@ export function generateBackdoors(nodes, regions, baseEdges, backdoorPct, minLen
     edges: added,
     meta: { numAdded: added.length, forwardPct: finalPct, lateralPct: 100 - finalPct, avgHops: avgHops.toFixed(1), failures }
   };
+  if (finalPct < 45 && freeCandidates.length > 0) {
+  const extraLateral = freeCandidates.find(p => {
+    const da = regionDistToGoal(p.a.region), db = regionDistToGoal(p.b.region);
+    return da === db;  // Solo lateral
+    });
+    if (extraLateral) {
+      added.push({ from: extraLateral.a.id, to: extraLateral.b.id, type: 'backdoor' });
+      console.log(`[Backdoors] Added extra lateral for balance: ${extraLateral.a.id}-${extraLateral.b.id}`);
+    }
+  }
 }

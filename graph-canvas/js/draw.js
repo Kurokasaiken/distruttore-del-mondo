@@ -74,3 +74,22 @@ export function drawGraph(canvas, ctx, currentGraph, currentPlayerPos, playbackT
   ctx.textAlign = 'start';
   ctx.textBaseline = 'alphabetic';
 }
+// Nuovo: Event listener per movimento manuale (aggiungi in drawGraph o export)
+export function setupPlayerMove(canvas, graph, onMove) {
+  canvas.addEventListener('click', (e) => {
+    if (!graph || !window.currentPlayerPos) return;  // No graph/player
+    const rect = canvas.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) / s + minX - ox / s;  // Inverse transform (usa s, ox, oy da draw)
+    const clickY = (e.clientY - rect.top) / s + minY - oy / s;
+    const adj = buildAdj(graph.nodes, graph.edges);  // Da simulate-core
+    const targetNode = graph.nodes.reduce((closest, n) => {
+      const d = Math.hypot(n.x - clickX, n.y - clickY);
+      return d < closest.d ? { n, d } : closest;
+    }, { d: Infinity }).n;
+    if (targetNode && adj[window.currentPlayerPos].has(targetNode.id)) {  // Adiacente
+      window.currentPlayerPos = targetNode.id;
+      onMove(targetNode.id);  // Callback per update alert/patrols
+      window.redraw();  // Redraw con nuovo pos
+    }
+  });
+}

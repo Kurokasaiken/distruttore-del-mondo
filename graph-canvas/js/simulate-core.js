@@ -61,8 +61,8 @@ function serializePatrols(patrols) {
 
 function movePlayer(playerPos, goal, patrols, adj, visited) {
   const dToGoal = bfsHopSimple(adj, playerPos);
-  const options = Array.from(adj[playerPos] || []);
-  options.push(playerPos);
+  const options = Array.from(adj[playerPos] || []);  // Adiacenti
+  options.push(playerPos);  // Opzione "stay" per stealth
 
   const patrolPos = patrols.map(p => p.pos);
   function nearestPatrolHop(node) {
@@ -74,14 +74,14 @@ function movePlayer(playerPos, goal, patrols, adj, visited) {
 
   let best = null, bestScore = -Infinity;
   for (const opt of options) {
-    const h = (dToGoal[opt] === undefined) ? 999 : dToGoal[opt];
-    const pDist = nearestPatrolHop(opt);
-    const score = (pDist * 0.6) - (h * 1.0);
+    const h = (dToGoal[opt] === undefined) ? 999 : dToGoal[opt];  // Dist a goal
+    const pDist = nearestPatrolHop(opt);  // Dist media patrols
+    const score = (pDist * 0.6) - (h * 1.0);  // Greedy: allontana patrols, avvicina goal
     if (score > bestScore) { bestScore = score; best = opt; }
   }
 
   const newPos = best;
-  visited.add(newPos);
+  visited.add(newPos);  // Track esplorazione per metriche
   return newPos;
 }
 

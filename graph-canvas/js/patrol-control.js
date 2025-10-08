@@ -74,16 +74,16 @@ export function computeDirVecAndCone(graph, patrol, adj) {
 }
 
 export function updatePatrols(patrols, alert, playerPos, adj, nodes, visited) {
-  const prevAlert = alert - 1;
+  const prevAlert = alert - 1;  // Assume previous
 
-  // Spawn if alert up
+  // Spawn if alert up (Fix: Prob 0.12 per rg, nodo dist ≥2)
   if (alert > prevAlert) {
     for (let rg = 0; rg < config.NUM_REGIONS; rg++) {
       if (Math.random() < 0.12) {
         const distMap = bfsHopSimple(adj, playerPos);
-        const cand = nodes.filter(n => n.region === rg && ((distMap[n.id] === undefined) || distMap[n.id] >= 2)).map(n => n.id);
+        const cand = nodes.filter(n => n.region === rg && (distMap[n.id] === undefined || distMap[n.id] >= 2)).map(n => n.id);  // Fix: Dist ≥2 dal player
         if (cand.length > 0) {
-          const pos = cand[Math.floor(Math.random() * cand.length)];
+          const pos = cand[Math.floor(Math.random() * cand.length)];  // Random in cand
           const nb = Array.from(adj[pos] || []);
           const intent = nb.length > 0 ? nb[Math.floor(Math.random() * nb.length)] : null;
           patrols.push({
@@ -98,7 +98,7 @@ export function updatePatrols(patrols, alert, playerPos, adj, nodes, visited) {
     console.log('[PatrolControl] Spawned, total patrols:', patrols.length);
   }
 
-  // Despawn if alert down
+  // Despawn if alert down (invariato)
   if (alert < prevAlert && patrols.length > 0) {
     const distMap = bfsHopSimple(adj, playerPos);
     let closestIdx = null, bestd = Infinity;
@@ -112,7 +112,7 @@ export function updatePatrols(patrols, alert, playerPos, adj, nodes, visited) {
     }
   }
 
-  // Move patrols
+  // Move patrols (invariato)
   for (const p of patrols) {
     p.prev = p.pos;
     if (p.intent) {
@@ -121,7 +121,6 @@ export function updatePatrols(patrols, alert, playerPos, adj, nodes, visited) {
       const nb = Array.from(adj[p.pos] || []);
       if (nb.length > 0) p.pos = nb[Math.floor(Math.random() * nb.length)];
     }
-    // Genera nuovo intent
     const nb = Array.from(adj[p.pos] || []);
     p.intent = nb.length > 0 ? nb[Math.floor(Math.random() * nb.length)] : null;
   }
