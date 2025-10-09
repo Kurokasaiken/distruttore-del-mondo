@@ -1,30 +1,32 @@
 import { el } from './utils.js';
+import { config } from './config.js';
 
-export function setupElements() {
-  const backdoorPctEl = el('backdoorPct');
-  const minLenEl = el('backdoorMinLen');
-  const maxLenEl = el('backdoorMaxLen');
-  const diagonalBiasEl = el('diagonalBiasPct');
-  const patrolDepthEl = el('patrolDepth');
-  const runBtn = el('runBtn');
-  const simBtn = el('simBtn');
-  const infoEl = el('info');
+// Elementi UI principali
+export const backdoorPctEl = el('backdoorPct');
+export const minLenEl = el('backdoorMin');
+export const maxLenEl = el('backdoorMax');
+export const diagonalBiasEl = el('diagonalBias');
+export const patrolDepthEl = el('patrolDepth');
+export const runBtn = el('runBtn');
+export const simBtn = el('simBtn');
+export const canvas = el('graphCanvas');
 
+// Helper per leggere i parametri UI con fallback ai valori di config
+export function readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl) {
   return {
-    ok: !!(backdoorPctEl && minLenEl && maxLenEl && diagonalBiasEl && patrolDepthEl && runBtn && simBtn && infoEl),
-    backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, runBtn, simBtn, infoEl
+    backdoorPct: parseInt(backdoorPctEl?.value, 10) || config.backdoorPct,
+    minLen: parseInt(minLenEl?.value, 10) || config.minLen,
+    maxLen: parseInt(maxLenEl?.value, 10) || config.maxLen,
+    diagonalBiasPct: parseInt(diagonalBiasEl?.value, 10) || config.diagonalBiasPct,
+    patrolDepth: parseInt(patrolDepthEl?.value, 10) || config.patrolDepth
   };
 }
 
-export function readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl,degree3El,degree4El) {
-  return {
-    backdoorPct: parseFloat(backdoorPctEl?.value) || 8,
-    minLen: parseInt(minLenEl?.value, 10) || 3,
-    maxLen: parseInt(maxLenEl?.value, 10) || 6,
-    diagonalBiasPct: parseFloat(diagonalBiasEl?.value) || 70,
-    patrolDepth: parseInt(patrolDepthEl?.value, 10) || 2,
-    patrolDepth: parseInt(patrolDepthEl?.value, 10) || config.patrolDepth,
-    degree3Pct: parseFloat(degree3El?.value) || config.degree3Pct,
-    degree4Pct: parseFloat(degree4El?.value) || config.degree4Pct
-  };
+// Funzione per impostare i valori predefiniti nei campi di input
+export function setDefaultInputValues() {
+  if (backdoorPctEl) backdoorPctEl.value = config.backdoorPct;
+  if (minLenEl) minLenEl.value = config.minLen;
+  if (maxLenEl) maxLenEl.value = config.maxLen;
+  if (diagonalBiasEl) diagonalBiasEl.value = config.diagonalBiasPct;
+  if (patrolDepthEl) patrolDepthEl.value = config.patrolDepth;
 }

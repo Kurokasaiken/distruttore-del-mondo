@@ -11,9 +11,14 @@ import {
   drawStaticPatrols,
   drawPlaybackPatrols
 } from './draw-patrol.js';
-import { gameState, buildAdj } from './simulate-core.js';  // Fix: Import per HUD e adj
 
-export function drawGraph(canvas, ctx, currentGraph, currentPlayerPos, playbackTrace, playbackIdx, controlledNodes = null, intentNodes = null) {
+export function drawGraph(canvas, ctx, currentGraph, currentPlayerPos, playbackTrace, playbackIdx, controlledNodes = null, intentNodes = null, gameState = null) {
+  // Fix: Check ctx valido prima di tutto
+  if (!ctx || typeof ctx.clearRect !== 'function') {
+    console.warn('Draw: ctx invalid, skip');
+    return;
+  }
+
   console.log('Draw called with:', { hasGraph: !!currentGraph, nodes: currentGraph?.nodes?.length, edges: currentGraph?.edges?.length, controlled: controlledNodes ? controlledNodes.size : 0, intent: intentNodes ? intentNodes.size : 0 });
   
   if (!currentGraph) {
@@ -71,15 +76,15 @@ export function drawGraph(canvas, ctx, currentGraph, currentPlayerPos, playbackT
     drawPlaybackPatrols(ctx, g, s, ox, oy, playbackTrace, playbackIdx, state);
   }
 
-  // Overlay HUD (top-left, semi-trasparente) – Fix: Usa gameState importato
-  if (currentGraph) {
+  // Overlay HUD
+  if (currentGraph && gameState) {
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(10, 10, 200, 60);  // Box scuro
+    ctx.fillRect(10, 10, 200, 60);
     ctx.fillStyle = 'white';
     ctx.font = '14px monospace';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`Alert: ${gameState.alert}/5`, 20, 20);  // Rosso se >3
+    ctx.fillText(`Alert: ${gameState.alert}/5`, 20, 20);
     ctx.fillStyle = gameState.alert > 3 ? '#ef4444' : 'white';
     ctx.fillText(`God: ${gameState.god}`, 20, 40);
     ctx.fillStyle = 'orange';
@@ -91,12 +96,12 @@ export function drawGraph(canvas, ctx, currentGraph, currentPlayerPos, playbackT
   ctx.textBaseline = 'alphabetic';
 }
 
-// Nuovo: Event listener per movimento manuale (Fix: Ricalcola transform dentro listener)
+// setupPlayerMove (invariato, con fix scoping)
 export function setupPlayerMove(canvas, graph, onMove) {
   canvas.addEventListener('click', (e) => {
-    if (!graph || !window.currentPlayerPos) return;  // No graph/player
+    if (!graph || !window.currentPlayerPos) return;
 
-    // Fix: Ricalcola bounds/transform qui (stesse logiche di drawGraph)
+    // Ricalcola bounds/transform
     const all = graph.regions.flatMap(r => [r.bbox.x0, r.bbox.x1, r.bbox.y0, r.bbox.y1]);
     const xs = graph.nodes.map(n => n.x).concat(all);
     const ys = graph.nodes.map(n => n.y).concat(all);
@@ -110,17 +115,17 @@ export function setupPlayerMove(canvas, graph, onMove) {
     const oy = pad - minY * s + (canvas.height - 2 * pad - (maxY - minY) * s) / 2;
 
     const rect = canvas.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left - ox) / s;  // Fix: Inverse transform corretto
+    const clickX = (e.clientX - rect.left - ox) / s;
     const clickY = (e.clientY - rect.top - oy) / s;
-    const adj = buildAdj(graph.nodes, graph.edges);  // Da simulate-core (importato)
+    const adj = buildAdj(graph.nodes, graph.edges);
     const targetNode = graph.nodes.reduce((closest, n) => {
       const d = Math.hypot(n.x - clickX, n.y - clickY);
       return d < closest.d ? { n, d } : closest;
     }, { d: Infinity }).n;
-    if (targetNode && adj[window.currentPlayerPos].has(targetNode.id)) {  // Adiacente
+    if (targetNode && adj[window.currentPlayerPos].has(targetNode.id)) {
       window.currentPlayerPos = targetNode.id;
-      onMove(targetNode.id);  // Callback per update alert/patrols/God
-      window.redraw();  // Redraw con nuovo pos
+      onMove(targetNode.id);
+      window.redraw();
     }
   });
 }

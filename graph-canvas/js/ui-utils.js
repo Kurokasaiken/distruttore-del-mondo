@@ -40,7 +40,7 @@ export function setupStaticInfo(container) {
 
 export function setupEventListeners(elements) {
   const { 
-    backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, degree3El, degree4El, runBtn, simBtn,  // ← Aggiungi qui
+    backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, runBtn, simBtn, 
     canvas,
     globals: { currentGraph, currentPlayerPos, playbackTrace, playbackIdx },
     redraw
@@ -52,8 +52,7 @@ export function setupEventListeners(elements) {
   runBtn?.addEventListener('click', async () => {
     try {
       console.log('RunBtn clicked');
-      const params = readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl,degree3Pct,degree4Pct);
-      // Update config runtime per persistenza
+      const params = readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl);
       config.backdoorPct = params.backdoorPct;
       config.minLen = params.minLen;
       config.maxLen = params.maxLen;
@@ -64,16 +63,13 @@ export function setupEventListeners(elements) {
       const result = await generateAndValidate(params);
       if (result.success) {
         window.currentPlayerPos = result.graph.nodes.find(n => n.type === 'start')?.id ?? null;
-        console.log('Player pos set:', window.currentPlayerPos);
-        window.currentGraph = result.graph;  // Imposta globale
+        window.currentGraph = result.graph;
         log('Grafo valido generato.');
         logPercentDiagonal(result.graph, params.diagonalBiasPct);
         initPatrolsAndHighlight(result.graph, params.patrolDepth);
-        // Chiama redraw dopo l'assegnazione (sync in ui.js lo fa funzionare)
-        window.redraw();  // ← Qui: ridisegna subito dopo impostare il graph
+        window.redraw();
       } else {
         log('Nessun grafo valido entro 30 tentativi. Ultimi errori: ' + result.last.failures.join('; '));
-        console.log('No success, last check:', result.last);
       }
     } catch (error) {
       console.error('Errore in run handler:', error);
@@ -83,47 +79,63 @@ export function setupEventListeners(elements) {
 
   // Handler per "Gioca Run" (simBtn)
   simBtn?.addEventListener('click', () => {
+    if (!canvas || !canvas.getContext) {
+      console.error('Invalid canvas element:', canvas);
+      log('Errore: canvas non valido.');
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Invalid canvas context:', ctx);
+      log('Errore: contesto canvas non valido.');
+      return;
+    }
+
     if (!window.currentGraph) {
       alert('Genera prima un grafo valido');
       return;
     }
+
     const res = simulateTrace(window.currentGraph);
-    if (!res) {
-      log('Simulazione fallita.');
+    if (!res || !res.trace) {
+      log('Simulazione fallita: no trace.');
       return;
     }
+
     if (res.outcome === 'victory') log('Victory in ' + res.turns + ' turns');
     else if (res.outcome === 'captured') log('Captured in ' + res.turns + ' turns');
     else log('Timeout');
 
-    window.playbackTrace = res.trace || res;
+    window.playbackTrace = res.trace || [];
     window.playbackIdx = 0;
 
     if (typeof playTrace === 'function') {
       try {
-        playTrace({ trace: window.playbackTrace }, (idx) => {
+        playTrace(window.playbackTrace, canvas, ctx, window.currentGraph, window.currentPlayerPos, (idx) => {
           window.playbackIdx = idx;
-          drawGraph(window.currentGraph, canvas, null, window.playbackTrace, window.playbackIdx);
-        }, config.PLAYBACK_DELAY);
+        }, null);
       } catch (err) {
         console.warn('playTrace failed, using fallback:', err);
-        fallbackPlayback();
+        fallbackPlayback(ctx);
       }
     } else {
-      fallbackPlayback();
+      fallbackPlayback(ctx);
     }
 
-    function fallbackPlayback() {
+    function fallbackPlayback(ctx) {
       if (playbackTimer) clearInterval(playbackTimer);
       let localIdx = 0;
       playbackTimer = setInterval(() => {
-        localIdx++;
         if (localIdx >= window.playbackTrace.length) { 
           clearInterval(playbackTimer); 
           playbackTimer = null; 
+          log('Playback finito.');
           return; 
         }
-        drawGraph(window.currentGraph, canvas, null, window.playbackTrace, localIdx);
+        const state = window.playbackTrace[localIdx];
+        drawGraph(canvas, ctx, window.currentGraph, state.player, window.playbackTrace, localIdx);
+        localIdx++;
       }, config.PLAYBACK_DELAY);
     }
   });
@@ -148,9 +160,9 @@ export function setupEventListeners(elements) {
 
     const { controlledNodes, intentNodes } = markPatrolControl(window.currentGraph.patrols || [], window.currentGraph, newDepth);
 
-    drawGraph(window.currentGraph, canvas, window.currentPlayerPos, window.playbackTrace, window.playbackIdx, controlledNodes, intentNodes);
+    // Fix: Passa ctx a drawGraph (order: canvas, ctx, graph, player, trace, idx, controlled, intent)
+    drawGraph(canvas, window.ctx, window.currentGraph, window.currentPlayerPos, window.playbackTrace, window.playbackIdx, controlledNodes, intentNodes);
     log(`Perception depth aggiornata a ${newDepth}`);
-    // ← Qui: redraw è già chiamato via drawGraph, ma se serve extra: window.redraw();
   });
 
   // Save button
