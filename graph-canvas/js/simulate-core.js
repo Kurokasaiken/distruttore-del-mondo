@@ -1,7 +1,18 @@
 import { config } from './config.js';
 import { updatePatrols } from './patrol-control.js';
 
+export let gameState = {  // Nuovo: Stato condiviso (mutabile)
+  alert: 1,  // Inizia 1, max 5
+  god: 80,   // Countdown da 80
+  patrolsCount: 0  // Calcolato da patrols.length
+};
+
 export function simulateTrace(graph) {
+  // Reset stato per nuova sim
+  gameState.alert = 1;
+  gameState.god = 80;
+  gameState.patrolsCount = graph.patrols?.length || 0;
+
   const nodes = JSON.parse(JSON.stringify(graph.nodes));
   const edges = graph.edges.slice();
   const adj = buildAdj(nodes, edges);
@@ -11,19 +22,32 @@ export function simulateTrace(graph) {
   let patrols = graph.patrols || [];
   console.log('Sim patrols init:', patrols.length, 'with depth', config.patrolDepth);
 
-  let alert = 1;
   let playerPos = start;
   const visited = new Set([start]);
   const trace = [];
-  trace.push({ player: playerPos, patrols: serializePatrols(patrols), alert });
+  trace.push({ player: playerPos, patrols: serializePatrols(patrols), alert: gameState.alert, god: gameState.god, patrolsCount: gameState.patrolsCount });
 
   for (let t = 1; t <= config.SIM_MAX_TURNS; t++) {
     playerPos = movePlayer(playerPos, goal, patrols, adj, visited);
+    gameState.god--;  // Fix: Decrement God per mossa
 
-    alert = updateAlert(alert);
+    // Fix: Detection/Alert change post-move (dal documento: +10% up, -5% down)
+    const minDistToPatrol = Math.min(...patrols.map(p => bfsHopSimple(adj, playerPos)[p.pos] || 999));
+    const perception = 1 + Math.ceil(gameState.alert / 2);
+    if (minDistToPatrol <= perception && Math.random() < 0.10) {
+      gameState.alert = Math.min(5, gameState.alert + 1);  // +10% up
+      console.log(`Detection up: dist=${minDistToPatrol}, alert now ${gameState.alert}`);
+    } else if (Math.random() < 0.05) {  // -5% down (prob bassa)
+      gameState.alert = Math.max(1, gameState.alert - 1);
+      console.log(`Alert down: now ${gameState.alert}`);
+    }
+
+    gameState.patrolsCount = patrols.length;  // Update count
+    alert = gameState.alert;  // Sync locale
     updatePatrols(patrols, alert, playerPos, adj, nodes, visited);
 
-    trace.push({ player: playerPos, patrols: serializePatrols(patrols), alert });
+    trace.push({ player: playerPos, patrols: serializePatrols(patrols), alert: gameState.alert, god: gameState.god, patrolsCount: gameState.patrolsCount });
+    if (gameState.god <= 0) return { outcome: 'god depleted', turns: t, trace };  // Fix: Game over God=0
     if (patrols.some(p => p.pos === playerPos)) return { outcome: 'captured', turns: t, trace };
     if (playerPos === goal) return { outcome: 'victory', turns: t, trace };
   }
@@ -45,7 +69,7 @@ export function bfsHopSimple(adj, start) {
   return dist;
 }
 
-function buildAdj(nodes, edges) {
+export function buildAdj(nodes, edges) {
   const adj = {};
   nodes.forEach(n => adj[n.id] = new Set());
   edges.forEach(e => {

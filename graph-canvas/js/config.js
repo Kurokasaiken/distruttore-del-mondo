@@ -16,7 +16,7 @@ export const config = {
   PATROL_DEPTH_DEFAULT: 2,
 
   // Variabili mutabili runtime (dal FE)
-  patrolDepth: 2,  // Default da qui per readParams
+  patrolDepth: 1,  // Default da qui per readParams
   coneAngle: 80,
   backdoorPct: 8,  // Default da qui per readParams
   minLen: 3,  // Default da qui per readParams
