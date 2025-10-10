@@ -44,7 +44,7 @@ export function setupEventListeners(elements) {
     canvas,
     globals: { currentGraph, currentPlayerPos, playbackTrace, playbackIdx },
     redraw,
-    interRegionEdgesEl
+    interRegionEdgesEl  // Assicurati di ricevere questo elemento
   } = elements;
 
   let playbackTimer = null;
@@ -58,7 +58,12 @@ export function setupEventListeners(elements) {
       config.minLen = params.minLen;
       config.maxLen = params.maxLen;
       config.diagonalBiasPct = params.diagonalBiasPct;
-      log('Generazione: backdoorPct=' + params.backdoorPct + ', min=' + params.minLen + ', max=' + params.maxLen + ', diagonalBias=' + params.diagonalBiasPct + '%');
+      config.INTER_REGION_EDGES = params.interRegionEdges;  // Importante: aggiorna anche in config
+      log('Generazione: backdoorPct=' + params.backdoorPct + 
+          ', min=' + params.minLen + 
+          ', max=' + params.maxLen + 
+          ', diagonalBias=' + params.diagonalBiasPct + '%' +
+          ', interRegionEdges=' + params.interRegionEdges);  // Aggiungi log
       console.log('Params:', params);
 
       const result = await generateAndValidate(params);

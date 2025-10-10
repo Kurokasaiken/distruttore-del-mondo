@@ -74,17 +74,47 @@ export function buildEdges(nodes, regions, diagonalBiasPct = config.diagonalBias
       if (nr >= 0 && nr < config.REG_ROWS && nc >= 0 && nc < config.REG_COLS) adjPairs.push([r, nr * config.REG_COLS + nc]);
     });
   }
+
+  console.log(`[BuildEdges] Creating ${interRegionEdges} edges between ${adjPairs.length} adjacent region pairs`);
+
+  let interRegionEdgesCreated = 0;
+  
+  // Per ogni coppia di regioni adiacenti
   adjPairs.forEach(pair => {
     const [a, b] = pair;
     const A = nodes.filter(n => n.region === a);
     const B = nodes.filter(n => n.region === b);
     if (A.length === 0 || B.length === 0) return;
+    
+    // Set per tenere traccia dei nodi già utilizzati per connessioni tra queste regioni
+    const usedA = new Set();
+    const usedB = new Set();
+    
+    // Genera tutte le possibili coppie di nodi tra le due regioni
     const pairs = [];
     A.forEach(na => B.forEach(nb => pairs.push({ a: na.id, b: nb.id, d: diagonalDist(na.id, nb.id) })));
     pairs.sort((u, v) => u.d - v.d);
-    // Usa il parametro invece di num random
-    for (let i = 0; i < interRegionEdges && i < pairs.length; i++) addEdge(pairs[i].a, pairs[i].b, 'inter');
+    
+    // Crea 'interRegionEdges' connessioni (o meno se non ci sono abbastanza coppie)
+    let edgesForThisPair = 0;
+    for (let i = 0; i < pairs.length && edgesForThisPair < interRegionEdges; i++) {
+      const nodeA = pairs[i].a;
+      const nodeB = pairs[i].b;
+      
+      // Verifica che entrambi i nodi non siano già stati usati per una connessione
+      if (!usedA.has(nodeA) && !usedB.has(nodeB)) {
+        addEdge(nodeA, nodeB, 'inter');
+        usedA.add(nodeA);
+        usedB.add(nodeB);
+        edgesForThisPair++;
+        interRegionEdgesCreated++;
+      }
+    }
+    
+    console.log(`[BuildEdges] Created ${edgesForThisPair} edges between regions ${a} and ${b}`);
   });
+
+  console.log(`[BuildEdges] Created total of ${interRegionEdgesCreated} inter-region edges`);
 
   // Restituisci baseEdges iniziale
   let baseEdges = Object.keys(edgesMap).map(k => edgesMap[k]);

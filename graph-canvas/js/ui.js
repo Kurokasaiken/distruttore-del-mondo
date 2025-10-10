@@ -62,6 +62,7 @@ function syncDefaultsToUI() {
   const patrolDepthEl = el('patrolDepth');
   const degree3El = el('degree3Pct');
   const degree4El = el('degree4Pct');
+  const interRegionEdgesEl = el('interRegionEdges');
 
   if (degree3El) degree3El.value = config.degree3Pct || 30;
   if (degree4El) degree4El.value = config.degree4Pct || 15;
@@ -70,6 +71,7 @@ function syncDefaultsToUI() {
   if (maxLenEl) maxLenEl.value = config.maxLen;
   if (diagonalBiasEl) diagonalBiasEl.value = config.diagonalBiasPct;
   if (patrolDepthEl) patrolDepthEl.value = config.patrolDepth;
+  if (interRegionEdgesEl) interRegionEdgesEl.value = config.INTER_REGION_EDGES;
 
   console.log('[UI] Default values synced from config');
 }
@@ -134,6 +136,7 @@ function getUIElements() {
     patrolDepthEl: el('patrolDepth'),
     runBtn: el('runBtn'),
     simBtn: el('simBtn'),
+    interRegionEdgesEl: el('interRegionEdges'),  // Aggiungi questo
   };
 }
 
