@@ -10,15 +10,17 @@ export const patrolDepthEl = el('patrolDepth');
 export const runBtn = el('runBtn');
 export const simBtn = el('simBtn');
 export const canvas = el('graphCanvas');
+export const interRegionEdgesEl = el('interRegionEdges');
 
 // Helper per leggere i parametri UI con fallback ai valori di config
-export function readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl) {
+export function readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, interRegionEdgesEl) {
   return {
     backdoorPct: parseInt(backdoorPctEl?.value, 10) || config.backdoorPct,
     minLen: parseInt(minLenEl?.value, 10) || config.minLen,
     maxLen: parseInt(maxLenEl?.value, 10) || config.maxLen,
     diagonalBiasPct: parseInt(diagonalBiasEl?.value, 10) || config.diagonalBiasPct,
-    patrolDepth: parseInt(patrolDepthEl?.value, 10) || config.patrolDepth
+    patrolDepth: parseInt(patrolDepthEl?.value, 10) || config.patrolDepth,
+    interRegionEdges: parseInt(interRegionEdgesEl?.value, 10) || config.INTER_REGION_EDGES
   };
 }
 
@@ -29,4 +31,5 @@ export function setDefaultInputValues() {
   if (maxLenEl) maxLenEl.value = config.maxLen;
   if (diagonalBiasEl) diagonalBiasEl.value = config.diagonalBiasPct;
   if (patrolDepthEl) patrolDepthEl.value = config.patrolDepth;
+  if (interRegionEdgesEl) interRegionEdgesEl.value = config.INTER_REGION_EDGES;
 }

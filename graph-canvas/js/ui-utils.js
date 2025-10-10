@@ -43,7 +43,8 @@ export function setupEventListeners(elements) {
     backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, runBtn, simBtn, 
     canvas,
     globals: { currentGraph, currentPlayerPos, playbackTrace, playbackIdx },
-    redraw
+    redraw,
+    interRegionEdgesEl
   } = elements;
 
   let playbackTimer = null;
@@ -52,7 +53,7 @@ export function setupEventListeners(elements) {
   runBtn?.addEventListener('click', async () => {
     try {
       console.log('RunBtn clicked');
-      const params = readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl);
+      const params = readParams(backdoorPctEl, minLenEl, maxLenEl, diagonalBiasEl, patrolDepthEl, interRegionEdgesEl);
       config.backdoorPct = params.backdoorPct;
       config.minLen = params.minLen;
       config.maxLen = params.maxLen;

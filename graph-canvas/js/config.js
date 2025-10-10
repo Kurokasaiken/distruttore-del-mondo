@@ -15,17 +15,23 @@ export const config = {
   PLAYBACK_DELAY: 600,
   PATROL_DEPTH_DEFAULT: 2,
 
-  // Variabili mutabili runtime (dal FE)
-  patrolDepth: 1,  // Default da qui per readParams
+  // Variabili mutabili runtime (modificabili da eventi/FE)
+  INTER_REGION_EDGES: 3, // Numero di archi tra regioni adiacenti
+  patrolDepth: 1,
   coneAngle: 80,
-  backdoorPct: 8,  // Default da qui per readParams
-  minLen: 3,  // Default da qui per readParams
-  maxLen: 6,  // Default da qui per readParams
+  backdoorPct: 8,
+  minLen: 3,
+  maxLen: 6,
   diagonalBiasPct: 70,
-  degree3Pct: 30,  // Default % nodi con 3 edges
+  degree3Pct: 30,
   degree4Pct: 15,
-  // Aggiungi altre se serve
+  // ...aggiungi altre variabili runtime se serve...
 };
+
+// Helper per modificare dinamicamente i valori mutabili
+export function setConfig(key, value) {
+  if (key in config) config[key] = value;
+}
 
 // Helper per reset a default (opzionale, chiama dal FE)
 export function resetConfig() {
@@ -35,4 +41,7 @@ export function resetConfig() {
   config.minLen = 3;
   config.maxLen = 6;
   config.diagonalBiasPct = 70;
+  config.INTER_REGION_EDGES = 3;
+  config.degree3Pct = 30;
+  config.degree4Pct = 15;
 }

@@ -1,6 +1,6 @@
 import { config } from './config.js';
 
-export function buildEdges(nodes, regions, diagonalBiasPct = config.diagonalBiasPct, degree3Pct = config.degree3Pct, degree4Pct = config.degree4Pct) {
+export function buildEdges(nodes, regions, diagonalBiasPct = config.diagonalBiasPct, degree3Pct = config.degree3Pct, degree4Pct = config.degree4Pct, interRegionEdges = config.INTER_REGION_EDGES) {
   const coord = {}; nodes.forEach(n => coord[n.id] = n);
   const edgesMap = {};
 
@@ -82,8 +82,8 @@ export function buildEdges(nodes, regions, diagonalBiasPct = config.diagonalBias
     const pairs = [];
     A.forEach(na => B.forEach(nb => pairs.push({ a: na.id, b: nb.id, d: diagonalDist(na.id, nb.id) })));
     pairs.sort((u, v) => u.d - v.d);
-    const num = Math.random() < 0.5 ? 1 : (Math.random() < 0.5 ? 2 : 3);
-    for (let i = 0; i < num && i < pairs.length; i++) addEdge(pairs[i].a, pairs[i].b, 'inter');
+    // Usa il parametro invece di num random
+    for (let i = 0; i < interRegionEdges && i < pairs.length; i++) addEdge(pairs[i].a, pairs[i].b, 'inter');
   });
 
   // Restituisci baseEdges iniziale
